@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e1015">
+<title>LEGO Dimensions Toy Pad</title>
+<style>
+
+:root{--bg:#0e1015;--panel:#151821;--body:#171a22;--rim:#2b3040;--empty:#1c202b;--text:#e8ecf3;--muted:#8a93a6;--good:#3be8a0;--warn:#f2c14e;--bad:#ff5a4d;--p1:#3aa0ff;--p2:#ff6a4d}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.35 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+body{padding:env(safe-area-inset-top) 12px calc(env(safe-area-inset-bottom) + 12px)}
+header{display:flex;gap:8px;align-items:center;padding:10px 0;position:sticky;top:0;background:var(--bg);z-index:5;flex-wrap:wrap}
+h1{font-size:17px;margin:0;flex:1 1 auto}
+button,.btn{background:var(--rim);color:var(--text);border:0;border-radius:10px;padding:10px 14px;font:inherit;cursor:pointer;min-height:42px}
+button:active,.btn:active{filter:brightness(1.3)}
+button.primary{background:#2a6df4}
+button.danger{background:#5a2a2e}
+button.on{background:#2a6df4}
+button:disabled{opacity:.4}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+.status{background:var(--panel);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--muted);display:grid;gap:2px}
+.status b{font-weight:600}
+.g{color:var(--good)}.w{color:var(--warn)}.r{color:var(--bad)}
+#msg{min-height:20px;margin:8px 2px;font-size:13px}
+.portal{background:var(--body);border:2px solid var(--rim);border-radius:22px;padding:6px;margin:8px 0}
+svg{width:100%;height:auto;display:block;touch-action:manipulation;user-select:none}
+.slot{cursor:pointer}
+.slot .ring{fill:var(--empty);stroke:var(--rim);stroke-width:5}
+.slot.target .ring{stroke:#fff;stroke-width:7;stroke-dasharray:14 10}
+.sl{fill:var(--muted);font-size:21px;text-anchor:middle;pointer-events:none}
+.nm{fill:#fff;font-size:22px;font-weight:600;text-anchor:middle;pointer-events:none;paint-order:stroke;stroke:#000;stroke-width:5px}
+.ini{fill:#fff;font-size:44px;font-weight:700;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.pl{font-size:26px;font-weight:700;text-anchor:middle;letter-spacing:3px}
+section{background:var(--panel);border-radius:14px;padding:10px;margin:10px 0}
+section h2{font-size:14px;margin:0 0 8px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+input[type=search],input[type=text],input[type=number],select{width:100%;background:var(--empty);border:1px solid var(--rim);color:var(--text);border-radius:10px;padding:10px;font:inherit;min-height:42px}
+.list{display:grid;gap:6px;margin-top:8px;max-height:52vh;overflow:auto;-webkit-overflow-scrolling:touch}
+.row{display:flex;align-items:center;gap:10px;background:var(--empty);border-radius:10px;padding:6px 8px;border:2px solid transparent;cursor:pointer}
+.row.sel{border-color:#2a6df4}
+.row.onp{opacity:.55}
+.thumb{position:relative}.thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top}
+.thumb{width:44px;height:44px;border-radius:50%;flex:none;overflow:hidden;display:grid;place-items:center;font-weight:700;color:#fff;background-size:cover;background-position:center top}
+.row .t{flex:1;min-width:0}.row .t div:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .t small{color:var(--muted)}
+.row .fav{background:transparent;padding:6px 8px;min-height:36px;font-size:20px;line-height:1;color:var(--muted)}.row .fav.on{color:#ffc928}
+.row .more{background:transparent;padding:6px 10px;min-height:36px;color:var(--muted)}
+#log{font:11px/1.4 ui-monospace,monospace;color:var(--muted);max-height:160px;overflow:auto;white-space:pre-wrap}
+label.chk{display:flex;gap:8px;align-items:center;font-size:14px;margin-top:8px}
+.hint{color:var(--muted);font-size:12px;margin:6px 0 0}
+input[type=file]{display:none}
+dialog{background:var(--panel);color:var(--text);border:1px solid var(--rim);border-radius:16px;max-width:92vw;width:420px}
+dialog::backdrop{background:#000a}
+dialog button{display:block;width:100%;margin:6px 0;text-align:left}
+.fld{display:grid;grid-template-columns:7.5em 1fr;gap:6px 8px;align-items:center;margin:10px 0}.fld label{color:var(--muted);font-size:13px}
+dialog .fld button{display:inline-block;width:auto;margin:0 6px 0 0;min-height:36px;padding:6px 10px}
+dialog pre.info{white-space:pre-wrap;font-size:12px;color:var(--muted);margin:8px 0}
+.gh{position:sticky;top:0;background:var(--panel);color:var(--muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;padding:6px 2px 2px;z-index:1}
+
+.pad{background:var(--body);border:2px solid var(--rim);border-radius:22px;padding:6px;margin:8px 0}
+.box{cursor:pointer}
+.box .shape{fill:var(--empty);stroke:var(--rim);stroke-width:.8}
+.box.filled .shape{fill:#2a6df4}
+.box.vehicle.filled .shape{fill:#c4602a}
+.box.target .shape{stroke:#fff;stroke-width:1.4;stroke-dasharray:3 2}
+.box.busy .shape{opacity:.5}
+.box.source .shape{stroke:#3be8a0;stroke-width:1.6}
+.box text{pointer-events:none;text-anchor:middle;font-size:2.7px;fill:#fff;paint-order:stroke;stroke:#000;stroke-width:.5px}
+.box .num{fill:var(--muted);font-size:3px;stroke:none}
+.padname{fill:var(--muted);font-size:3px;text-anchor:middle;letter-spacing:.2px}
+.tabs{display:flex;gap:8px;margin-bottom:8px}
+.tabs button{flex:1}
+.tag{font-size:11px;color:var(--muted)}
+.row .acts{display:flex;gap:2px;flex:none}
+.row .acts button{background:transparent;padding:6px 8px;min-height:36px;color:var(--muted)}
+.row.veh .thumb{background:#c4602a}
+</style>
+</head>
+<body>
+<header>
+  <h1>LEGO Dimensions Toy Pad</h1>
+  <button id="bConnect" class="primary">Connect Flipper</button>
+  <button id="bDisconnect" style="display:none">Disconnect</button>
+</header>
+<div class="status" id="status"></div>
+<div id="msg"></div>
+
+<section>
+  <h2>Toy pad</h2>
+  <div class="pad"><svg id="padSvg" viewBox="0 0 100 58" aria-label="Toy pad"></svg></div>
+  <div class="bar">
+    <button id="bRemove" disabled>Take selected off</button>
+    <button id="bClear" class="danger" disabled>Clear pad</button>
+  </div>
+  <p class="hint" id="padHint">Tap an empty spot to choose where the next token goes, or just tap a character below to use the next free spot. To move a token, tap it on the pad, then tap the spot you want: it moves there, or switches places with whatever is on that spot.</p>
+</section>
+
+<section>
+  <h2>Tokens</h2>
+  <div class="tabs"><button id="tabMini" class="on">Minifigures</button><button id="tabVeh">Vehicles</button><button id="tabFav">Favorites</button></div>
+  <input type="search" id="q" placeholder="Search">
+  <div class="list" id="list"></div>
+  <p class="hint">Only the Flipper's own character and vehicle list can be placed. Characters have no memory to keep; vehicles do (see Saved vehicles below). Favorites stay in this browser.</p>
+</section>
+
+<section id="lib">
+  <h2>Saved vehicles</h2>
+  <div class="bar">
+    <button id="bSaveSel" disabled>Save selected spot</button>
+    <button id="bToFlip" disabled>Save on Flipper</button>
+    <button id="bFromFlip" disabled>Import from Flipper</button>
+  </div>
+  <label class="chk"><input type="checkbox" id="autoKeep" checked> Remember upgrades automatically when the game changes a vehicle</label>
+  <div class="list" id="libList"></div>
+  <div class="bar"><button id="bExport">Export</button><button id="bImport">Import file</button><input type="file" id="fImport" accept=".json,application/json"></div>
+  <p class="hint">A vehicle keeps its upgrades in its own memory. While a vehicle is on the pad this page asks the Flipper for that memory and keeps a copy here (in this browser's own database, not uploaded). Tap a saved vehicle to put it back exactly as it was. Clearing site data erases the copies, so tap Export now and then.</p>
+</section>
+
+<section><h2>Log</h2><div id="log"></div></section>
+<script>
+/* ===== CORE (no DOM): protocol, session, transport ===== */
+const VERSION = 3, SOF = 0xA5, MAX_PAYLOAD = 1 + 1024, BOXES = 7;
+const MSG = { HELLO: 1, REMOVE: 3, CLEAR: 4, STATUS_REQ: 5, LD_PLACE: 0x0C, PLACE_VEHICLE: 0x0D, GET: 0x0E, SAVED_LIST: 0x0F, SAVED_READ: 0x10, SAVE_VEHICLE: 0x11, STATUS: 0x81, RESULT: 0x82, TOKEN: 0x86, SAVED_ITEM: 0x87 };
+const UID_SIZE = 7, DATA_SIZE = 180, BOX_FILE = 0xFF;
+const KIND = { EMPTY: 0, MINIFIG: 1, VEHICLE: 2 };
+const RESULT_TEXT = { 0: "ok", 1: "no such spot", 2: "bad length", 3: "that character or vehicle is not known to the Flipper", 4: "the Flipper refused it (no free token slot, or bad request)", 5: "not ready: plug the Flipper into the console, then open Emulate on the Flipper" };
+const USB_TEXT = { 0: "Flipper is not connected to a console", 1: "console connected, toy pad ready", 2: "console connected: open the Emulate screen on the Flipper" };
+/* Spot layout of the Flipper's Emulate screen, and which of the pad's three plates each spot is on. */
+const SPOTS = [
+  { x: 21, y: 22, pad: "Left" }, { x: 50, y: 14, pad: "Centre" }, { x: 79, y: 22, pad: "Right" },
+  { x: 16, y: 38, pad: "Left" }, { x: 31, y: 43, pad: "Left" }, { x: 69, y: 43, pad: "Right" }, { x: 84, y: 38, pad: "Right" },
+];
+const MINIFIGS = [[1, "Batman"], [2, "Gandalf"], [3, "Wyldstyle"], [4, "Aquaman"], [5, "Bad Cop"], [6, "Bane"], [7, "Bart Simpson"], [8, "Benny"], [9, "Chell"], [10, "Cole"], [11, "Cragger"], [12, "Cyborg"], [13, "Cyberman"], [14, "Doc Brown"], [15, "The Doctor"], [16, "Emmet"], [17, "Eris"], [18, "Gimli"], [19, "Gollum"], [20, "Harley Quinn"], [21, "Homer Simpson"], [22, "Jay"], [23, "Joker"], [24, "Kai"], [25, "ACU Trooper"], [26, "Gamer Kid"], [27, "Krusty the Clown"], [28, "Laval"], [29, "Legolas"], [30, "Lloyd"], [31, "Marty McFly"], [32, "Nya"], [33, "Owen Grady"], [34, "Peter Venkman"], [35, "Slimer"], [36, "Scooby-Doo"], [37, "Sensei Wu"], [38, "Shaggy"], [39, "Stay Puft"], [40, "Superman"], [41, "Unikitty"], [42, "Wicked Witch of the West"], [43, "Wonder Woman"], [44, "Zane"], [45, "Green Arrow"], [46, "Supergirl"], [47, "Abby Yates"], [48, "Finn the Human"], [49, "Ethan Hunt"], [50, "Lumpy Space Princess"], [51, "Jake the Dog"], [52, "Harry Potter"], [53, "Lord Voldemort"], [54, "Michael Knight"], [55, "B.A. Baracus"], [56, "Newt Scamander"], [57, "Sonic the Hedgehog"], [59, "Gizmo"], [60, "Stripe"], [61, "E.T."], [62, "Tina Goldstein"], [63, "Marceline the Vampire Queen"], [64, "Batgirl"], [65, "Robin"], [66, "Sloth"], [67, "Hermione Granger"], [68, "Chase McCain"], [69, "Excalibur Batman"], [70, "Raven"], [71, "Beast Boy"], [72, "Betelgeuse"], [74, "Blossom"], [75, "Bubbles"], [76, "Buttercup"], [77, "Starfire"]];
+const VEHICLES = [[1000, "Police Car"], [1001, "* Aerial Squad Car"], [1002, "* Missile Striker"], [1003, "Gravity Sprinter"], [1004, "* Street Shredder"], [1005, "* Sky Clobberer"], [1006, "Batmobile"], [1007, "* Batblaster"], [1008, "* Sonic Batray"], [1009, "Benny's Spaceship"], [1010, "* Lasercraft"], [1011, "* The Annihilator"], [1012, "DeLorean Time Machine"], [1013, "* Electric Time Machine"], [1014, "* Ultra Time Machine"], [1015, "Hoverboard"], [1016, "* Cyclone Board"], [1017, "* Ultimate Hoverjet"], [1018, "Eagle Interceptor"], [1019, "* Eagle Sky Blazer"], [1020, "* Eagle Swoop Diver"], [1021, "Swamp Skimmer"], [1022, "* Cragger's Fireship"], [1023, "* Croc Command Sub"], [1024, "Cyber-Guard"], [1025, "* Cyber-Wrecker"], [1026, "* Laser Robot Walker"], [1027, "K-9"], [1028, "* K-9 Ruff Rover"], [1029, "* K-9 Laser Cutter"], [1030, "TARDIS"], [1031, "* Laser-Pulse TARDIS"], [1032, "* Energy-Burst TARDIS"], [1033, "Emmet's Excavator"], [1034, "* Destroy Dozer"], [1035, "* Destruct-o-Mech"], [1036, "Winged Monkey"], [1037, "* Battle Monkey"], [1038, "* Commander Monkey"], [1039, "Axe Chariot"], [1040, "* Axe Hurler"], [1041, "* Soaring Chariot"], [1042, "Shelob the Great"], [1043, "* 8-Legged Stalker"], [1044, "* Poison Slinger"], [1045, "Homer's Car"], [1046, "* The Homercraft"], [1047, "* The SubmaHomer"], [1048, "Taunt-o-Vision"], [1049, "* Blast Cam"], [1050, "* The MechaHomer"], [1051, "Velociraptor"], [1052, "* Spike Attack Raptor"], [1053, "* Venom Raptor"], [1054, "Gyrosphere"], [1055, "* Sonic Beam Gyrosphere"], [1056, "* Speed Boost Gyrosphere"], [1057, "Clown Bike"], [1058, "* Cannon Bike"], [1059, "* Anti-Gravity Rocket Bike"], [1060, "Mighty Lion Rider"], [1061, "* Lion Blazer"], [1062, "* Fire Lion"], [1063, "Arrow Launcher"], [1064, "* Seeking Shooter"], [1065, "* Triple Ballista"], [1066, "Mystery Machine"], [1067, "* Mystery Tow & Go"], [1068, "* Mystery Monster"], [1069, "Boulder Bomber"], [1070, "* Boulder Blaster"], [1071, "* Cyclone Jet"], [1072, "Storm Fighter"], [1073, "* Lightning Jet"], [1074, "* Electro-Shooter"], [1075, "Blade Bike"], [1076, "* Flight Fire Bike"], [1077, "* Blades of Fire"], [1078, "Samurai Mech"], [1079, "* Samurai Shooter"], [1080, "* Soaring Samurai Mech"], [1081, "Companion Cube"], [1082, "* Laser Deflector"], [1083, "* Gold Heart Emitter"], [1084, "Sentry Turret"], [1085, "* Turret Striker"], [1086, "* Flight Turret Carrier"], [1087, "Scooby Snack"], [1088, "* Scooby Fire Snack"], [1089, "* Scooby Ghost Snack"], [1090, "Cloud Cuckoo Car"], [1091, "* X-Stream Soaker"], [1092, "* Rainbow Cannon"], [1093, "Invisible Jet"], [1094, "* Laser Shooter"], [1095, "* Torpedo Bomber"], [1096, "NinjaCopter"], [1097, "* Glaciator"], [1098, "* Freeze Fighter"], [1099, "Travelling Time Train"], [1100, "* Flight Time Train"], [1101, "* Missile Blast Time Train"], [1102, "Aqua Watercraft"], [1103, "* Seven Seas Speeder"], [1104, "* Trident of Fire"], [1105, "Drill Driver"], [1106, "* Bane Dig 'n' Drill"], [1107, "* Bane Drill 'n' Blast"], [1108, "Quinn Mobile"], [1109, "* Quinn Ultra Racer"], [1110, "* Missile Launcher"], [1111, "The Joker's Chopper"], [1112, "* Mischievous Missile Blaster"], [1113, "* Lock 'n' Laser Jet"], [1114, "Hover Pod"], [1115, "* Krypton Striker"], [1116, "* Super Stealth Pod"], [1117, "Dalek"], [1118, "* Fire 'n' Ride Dalek"], [1119, "* Silver Shooter Dalek"], [1120, "Ecto-1"], [1121, "* Ecto-1 Blaster"], [1122, "* Ecto-1 Water Diver"], [1123, "Ghost Trap"], [1124, "* Ghost Stun 'n' Trap"], [1125, "* Proton Zapper"], [1132, "Lloyd's Golden Dragon"], [1133, "* Sword Projector Dragon"], [1144, "* Mega Flight Dragon"], [1155, "Flying White Dragon"], [1156, "* Golden Fire Dragon"], [1157, "* Ultra Destruction Dragon"], [1158, "Arcade Machine"], [1159, "* 8-Bit Shooter"], [1160, "* The Pixelator"], [1161, "G-6155 Spy Hunter"], [1162, "* Interdiver"], [1163, "* Aerial Spyhunter"], [1164, "Slime Shooter"], [1165, "* Slime Exploder"], [1166, "* Slime Streamer"], [1167, "Terror Dog"], [1168, "* Terror Dog Destroyer"], [1169, "* Soaring Terror Dog"], [1170, "Ancient Psychic Tandem War Elephant"], [1171, "* Cosmic Squid"], [1172, "* Psychic Submarine"], [1173, "BMO"], [1174, "* DOGMO"], [1175, "* SNAKEMO"], [1176, "Jakemobile"], [1177, "* Snail Dude Jake"], [1178, "* Hover Jake"], [1179, "Lumpy Car"], [1180, "* Lumpy Truck"], [1181, "* Lumpy Land Whale"], [1182, "Lunatic Amp"], [1183, "* Shadow Scorpion"], [1184, "* Heavy Metal Monster"], [1185, "B.A.'s Van"], [1186, "* Fool Smasher"], [1187, "* Pain Plane"], [1188, "Phone Home"], [1189, "* Mobile Uplink"], [1190, "* Super-Charged Satellite"], [1191, "Niffler"], [1192, "* Sinister Scorpion"], [1193, "* Vicious Vulture"], [1194, "Swooping Evil"], [1195, "* Brutal Bloom"], [1196, "* Crawling Creeper"], [1197, "Ecto-1 (2016)"], [1198, "* Ectozer"], [1199, "* PerfEcto"], [1200, "Flash 'n' Finish"], [1201, "* Rampage Record Player"], [1202, "* Stripe's Throne"], [1203, "R.C. Racer"], [1204, "* Gadget-O-Matic"], [1205, "* Scarlet Scorpion"], [1206, "Hogwarts Express"], [1207, "* Soaring Steam Plane"], [1208, "* Steam Warrior"], [1209, "Enchanted Car"], [1210, "* Shark Sub"], [1211, "* Monstrous Mouth"], [1212, "IMF Scrambler"], [1213, "* Shock Cycle"], [1214, "* IMF Covert Jet"], [1215, "IMF Sports Car"], [1216, "* IMF Tank"], [1217, "* IMF Splorer"], [1218, "Sonic Speedster"], [1219, "* Blue Typhoon"], [1220, "* Moto Bug"], [1221, "The Tornado"], [1222, "* Crabmeat"], [1223, "* Eggcatcher"], [1224, "K.I.T.T."], [1225, "* Goliath Armored Semi"], [1226, "* K.I.T.T. Jet"], [1227, "Police Helicopter"], [1228, "* Police Hovercraft"], [1229, "* Police Plane"], [1230, "Bionic Steed"], [1231, "* Bat-Raptor"], [1232, "* Ultrabat"], [1233, "Batwing"], [1234, "* The Black Thunder"], [1235, "* Bat-Tank"], [1236, "Skeleton Organ"], [1237, "* Skeleton Jukebox"], [1238, "* Skele-Turkey"], [1239, "One-Eyed Willy's Pirate Ship"], [1240, "* Fanged Fortune"], [1241, "* Inferno Cannon"], [1242, "Buckbeak"], [1243, "* Giant Owl"], [1244, "* Fierce Falcon"], [1245, "Saturn's Sandworm"], [1246, "* Spooky Spider"], [1247, "* Haunted Vacuum"], [1248, "PPG Smartphone"], [1249, "* PPG Hotline"], [1250, "* Powerpuff Mag-Net"], [1251, "* Ka-Pow Cannon"], [1252, "* Slammin' Guitar"], [1253, "Mega Blast Bot"], [1254, "Octi"], [1255, "* Super Skunk"], [1256, "* Sonic Squid"], [1257, "T-Car"], [1258, "* T-Forklift"], [1259, "* T-Plane"], [1260, "Spellbook of Azarath"], [1261, "* Raven Wings"], [1262, "* Giant Hand"], [1263, "Titan Robot"], [1264, "* T-Rocket"], [1265, "* Robot Retriever"]];
+const SERIAL_PROFILES = [
+  { service: "8fe5b3d5-2e7f-4a98-2a48-7acc60fe0000", a: "19ed82ae-ed21-4c9d-4145-228e61fe0000", b: "19ed82ae-ed21-4c9d-4145-228e62fe0000" },
+  { service: "6e400001-b5a3-f393-e0a9-e50e24dcca9e", a: "6e400002-b5a3-f393-e0a9-e50e24dcca9e", b: "6e400003-b5a3-f393-e0a9-e50e24dcca9e" },
+];
+
+function crc8(data, crc = 0) {
+  for (const byte of data) {
+    crc ^= byte;
+    for (let i = 0; i < 8; i++) crc = (crc & 0x80) ? ((crc << 1) ^ 0x07) & 0xFF : (crc << 1) & 0xFF;
+  }
+  return crc;
+}
+function encode(type, payload = new Uint8Array(0)) {
+  if (payload.length > MAX_PAYLOAD) throw new Error("payload too large");
+  const body = new Uint8Array(3 + payload.length);
+  body[0] = type; body[1] = payload.length & 0xFF; body[2] = payload.length >> 8;
+  body.set(payload, 3);
+  const out = new Uint8Array(body.length + 2);
+  out[0] = SOF; out.set(body, 1); out[out.length - 1] = crc8(body);
+  return out;
+}
+class Parser {
+  constructor() { this.buf = []; this.bad = 0; }
+  feed(data) {
+    for (const b of data) this.buf.push(b);
+    const frames = [];
+    for (;;) {
+      const start = this.buf.indexOf(SOF);
+      if (start < 0) { this.buf = []; break; }
+      if (start) this.buf.splice(0, start);
+      if (this.buf.length < 4) break;
+      const length = this.buf[2] | (this.buf[3] << 8);
+      if (length > MAX_PAYLOAD) { this.bad++; this.buf.shift(); continue; }
+      const total = 5 + length;
+      if (this.buf.length < total) break;
+      const body = this.buf.slice(1, 4 + length);
+      if (crc8(body) === this.buf[total - 1]) {
+        frames.push({ type: body[0], payload: Uint8Array.from(body.slice(3)) });
+        this.buf.splice(0, total);
+      } else { this.bad++; this.buf.shift(); }
+    }
+    return frames;
+  }
+}
+const P = {
+  hello: () => encode(MSG.HELLO, Uint8Array.of(VERSION)),
+  statusReq: () => encode(MSG.STATUS_REQ),
+  place(box, kind, id, upgrades) {
+    const p = [box, kind, id & 0xFF, id >> 8];
+    if (upgrades) for (const u of upgrades) p.push(u & 0xFF, (u >>> 8) & 0xFF, (u >>> 16) & 0xFF, (u >>> 24) & 0xFF);
+    return encode(MSG.LD_PLACE, Uint8Array.from(p));
+  },
+  remove: (box) => encode(MSG.REMOVE, Uint8Array.of(box)),
+  clear: () => encode(MSG.CLEAR),
+  placeVehicle(box, uid, data) { const p = new Uint8Array(1 + UID_SIZE + DATA_SIZE); p[0] = box; p.set(uid, 1); p.set(data, 1 + UID_SIZE); return encode(MSG.PLACE_VEHICLE, p); },
+  get: (box) => encode(MSG.GET, Uint8Array.of(box)),
+  savedList: () => encode(MSG.SAVED_LIST),
+  savedRead: (name) => encode(MSG.SAVED_READ, new TextEncoder().encode(name)),
+  saveVehicle: (box) => encode(MSG.SAVE_VEHICLE, Uint8Array.of(box)),
+};
+/* Vehicle memory helpers. The upgrades are two 32-bit words in the token data; the id is at 0x24*4. */
+const hexOf = (u8) => Array.from(u8, (b) => b.toString(16).padStart(2, "0")).join("");
+const unhex = (h) => Uint8Array.from(h.match(/../g) || [], (x) => parseInt(x, 16));
+const vehIdOf = (d) => d[0x24 * 4] | (d[0x24 * 4 + 1] << 8);
+const u32At = (d, o) => ((d[o] | (d[o + 1] << 8) | (d[o + 2] << 16) | (d[o + 3] << 24)) >>> 0);
+
+const nameOf = (kind, id) => {
+  const t = kind === KIND.VEHICLE ? VEHICLES : MINIFIGS;
+  const f = t.find((e) => e[0] === id);
+  return f ? f[1] : `${kind === KIND.VEHICLE ? "Vehicle" : "Character"} ${id}`;
+};
+
+class LdSession {
+  constructor(transport, onLog = () => {}) {
+    this.transport = transport; this.onLog = onLog; this.onChange = () => {};
+    this.link = "disconnected"; this.linkDetail = ""; this.usb = null; this.version = null;
+    this.boxes = Array.from({ length: BOXES }, () => ({ kind: 0, id: 0 }));
+    this.moving = false; this.pending = new Set(); this.parser = new Parser(); this.problem = null; this.lastResult = null;
+    this.tokens = Array(BOXES).fill(null); this.asked = new Set(); this.onToken = () => {}; this.onSavedItem = () => {}; this.onResult = () => {};
+    transport.onLink = (s, d) => this.onLinkEvent(s, d);
+    transport.onData = (b) => { for (const f of this.parser.feed(b)) this.onFrame(f); this.onChange(); };
+    transport.onLog = (m) => this.onLog(m);
+    transport.onScan = () => {};
+  }
+  get connected() { return this.link === "connected"; }
+  get ready() { return this.connected && this.version === VERSION && this.usb === 1; }
+  send(frame) { this.transport.send(frame); }
+  onLinkEvent(state, detail) {
+    this.link = state; this.linkDetail = detail || "";
+    if (state === "connected") { this.usb = null; this.version = null; this.problem = null; this.send(P.hello()); }
+    else { this.pending.clear(); this.usb = null; this.version = null; this.tokens.fill(null); this.asked.clear(); }
+    this.onLog(`link ${state}${detail ? ": " + detail : ""}`); this.onChange();
+  }
+  requestStatus() { if (this.connected) this.send(P.statusReq()); }
+  firstFree() { for (let i = 0; i < BOXES; i++) if (!this.boxes[i].kind && !this.pending.has(i)) return i; return -1; }
+  place(kind, id, box = null) {
+    if (!this.connected) return [false, "Connect to the Flipper first."];
+    if (this.version !== null && this.version !== VERSION) return [false, this.problem || "Wrong Flipper mode."];
+    if (box === null) box = this.firstFree();
+    if (box < 0) return [false, "All 7 spots are used. Take one off first."];
+    this.pending.add(box); this.send(P.place(box, kind, id));
+    this.onLog(`${nameOf(kind, id)} -> spot ${box + 1}`); this.onChange();
+    return [true, `${nameOf(kind, id)} sent to spot ${box + 1}`];
+  }
+  placeVehicle(rec, box = null) {
+    if (!this.connected) return [false, "Connect to the Flipper first."];
+    if (this.version !== null && this.version !== VERSION) return [false, this.problem || "Wrong Flipper mode."];
+    if (box === null) box = this.firstFree();
+    if (box < 0) return [false, "All 7 spots are used. Take one off first."];
+    const uid = rec.uid, data = rec.data;
+    if (uid.length !== UID_SIZE || data.length !== DATA_SIZE) return [false, "That saved vehicle is damaged."];
+    this.pending.add(box); this.tokens[box] = { uid, data }; this.asked.delete(box);
+    this.send(P.placeVehicle(box, uid, data));
+    const nm = nameOf(KIND.VEHICLE, vehIdOf(data));
+    this.onLog(`${nm} (saved) -> spot ${box + 1}`); this.onChange();
+    return [true, `${nm} sent to spot ${box + 1} with its saved upgrades`];
+  }
+  /* Move the token on spot `src` to spot `dst`; if `dst` is taken the two switch places.
+   * The protocol has no "move", so this is remove + place, a short pause apart so the game sees each
+   * change. Vehicles are put back from their own memory so upgrades survive. */
+  move(src, dst) {
+    if (!this.connected) return [false, "Connect to the Flipper first."];
+    if (this.version !== null && this.version !== VERSION) return [false, this.problem || "Wrong Flipper mode."];
+    if (this.usb !== 1) return [false, USB_TEXT[this.usb] || "The pad is not ready yet."];
+    if (this.moving) return [false, "Still switching, one moment."];
+    if (src === dst || !this.boxes[src].kind) return [false, "Nothing to move there."];
+    const grab = (i) => {
+      const b = this.boxes[i]; if (!b.kind) return null;
+      if (b.kind !== KIND.VEHICLE) return { kind: b.kind, id: b.id };
+      const t = this.tokens[i];
+      if (!t || vehIdOf(t.data) !== b.id) { this.requestToken(i); return { wait: true }; }
+      return { kind: b.kind, id: b.id, rec: { uid: t.uid, data: t.data } };
+    };
+    const A = grab(src), B = grab(dst);
+    if ((A && A.wait) || (B && B.wait)) return [false, "Still reading a vehicle's memory from the Flipper. Try again in a moment."];
+    const put = (t, box) => (t.rec ? this.placeVehicle(t.rec, box) : this.place(t.kind, t.id, box));
+    const steps = [() => this.remove(src)];
+    if (B) steps.push(() => this.remove(dst));
+    steps.push(() => put(A, dst));
+    if (B) steps.push(() => put(B, src));
+    this.moving = true; this.pending.add(src); this.pending.add(dst);
+    const run = (n) => {
+      if (n >= steps.length || !this.connected) { this.moving = false; this.pending.delete(src); this.pending.delete(dst); this.onChange(); this.requestStatus(); return; }
+      steps[n](); setTimeout(() => run(n + 1), 300);
+    };
+    run(0);
+    const an = nameOf(A.kind, A.id).replace(/^\* /, "");
+    const bn = B ? nameOf(B.kind, B.id).replace(/^\* /, "") : "";
+    this.onLog(B ? `switch ${an} (spot ${src + 1}) <-> ${bn} (spot ${dst + 1})` : `move ${an}: spot ${src + 1} -> ${dst + 1}`);
+    return [true, B ? `Switching ${an} and ${bn}` : `Moving ${an} to spot ${dst + 1}`];
+  }
+  requestToken(box) { if (this.connected && !this.asked.has(box)) { this.asked.add(box); this.send(P.get(box)); } }
+  saveToFlipper(box) { if (!this.connected) return false; this.send(P.saveVehicle(box)); return true; }
+  listSaved() { if (!this.connected) return false; this.send(P.savedList()); return true; }
+  readSaved(name) { if (!this.connected) return false; this.send(P.savedRead(name)); return true; }
+  remove(box) { if (!this.connected) return false; this.pending.add(box); this.send(P.remove(box)); this.onChange(); return true; }
+  clear() { if (!this.connected) return false; this.send(P.clear()); return true; }
+  onFrame(f) {
+    if (f.type === MSG.STATUS) {
+      const p = f.payload; this.version = p[0];
+      if (p[0] !== VERSION) {
+        this.problem = p[0] === 1 ? "The Flipper is in Disney Infinity mode. Open LEGO Dimensions on the Flipper." :
+                       p[0] === 2 ? "The Flipper is in Skylanders mode. Open LEGO Dimensions on the Flipper (use the Skylanders page for Skylanders)." :
+                       `Unknown Flipper protocol version ${p[0]}.`;
+        this.onLog(this.problem); return;
+      }
+      this.problem = null; this.usb = p[1];
+      for (let i = 0; i < BOXES; i++) this.boxes[i] = { kind: p[4 + 3 * i], id: p[5 + 3 * i] | (p[6 + 3 * i] << 8) };
+      this.pending.clear();
+      /* Vehicles keep their upgrades in their own memory: fetch it once per vehicle on the pad. */
+      for (let i = 0; i < BOXES; i++) {
+        const b = this.boxes[i];
+        if (b.kind !== KIND.VEHICLE) { this.tokens[i] = null; this.asked.delete(i); continue; }
+        const t = this.tokens[i];
+        if ((!t || vehIdOf(t.data) !== b.id) && !this.asked.has(i)) { this.tokens[i] = null; this.requestToken(i); }
+      }
+    } else if (f.type === MSG.TOKEN) {
+      const p = f.payload; if (p.length !== 1 + UID_SIZE + DATA_SIZE) return;
+      const box = p[0], uid = p.slice(1, 1 + UID_SIZE), data = p.slice(1 + UID_SIZE);
+      const asked = box !== BOX_FILE && this.asked.delete(box);
+      if (box < BOXES) this.tokens[box] = { uid, data };
+      this.onToken(box, uid, data, asked);
+    } else if (f.type === MSG.SAVED_ITEM) {
+      this.onSavedItem(f.payload.length ? new TextDecoder().decode(f.payload) : null);
+    } else if (f.type === MSG.RESULT) {
+      const [req, box, code] = f.payload; this.pending.delete(box);
+      this.lastResult = { req, box, code, text: RESULT_TEXT[code] || `code ${code}` };
+      if (code) this.onLog(`Flipper: ${this.lastResult.text} (spot ${box + 1})`);
+      this.onResult(this.lastResult);
+    }
+  }
+}
+
+class WebBleTransport {
+  constructor() { this.device = null; this.writeCh = null; this.withResponse = false; this.q = []; this.busy = false; this.chunk = 20; this.alive = false; }
+  static supported() { return typeof navigator !== "undefined" && !!navigator.bluetooth; }
+  async connect() {
+    if (!WebBleTransport.supported()) { this.onLink("disconnected", "This browser has no Web Bluetooth. Use Chrome on Android (iPhone: the free Bluefy browser)."); return; }
+    let stage = "choosing a device";
+    try {
+      this.device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: SERIAL_PROFILES.map((p) => p.service) });
+      this.onLink("connecting", this.device.name || "device");
+      this.device.addEventListener("gattserverdisconnected", () => {
+        const was = this.alive; this.alive = false; this.q = [];
+        this.onLink("disconnected", was ? "Bluetooth connection lost" : "Disconnected");
+      });
+      stage = "opening the Bluetooth connection";
+      const server = await this.device.gatt.connect();
+      stage = "looking for the Flipper serial service";
+      let chars = null;
+      for (const p of SERIAL_PROFILES) {
+        try { const svc = await server.getPrimaryService(p.service); chars = [await svc.getCharacteristic(p.a), await svc.getCharacteristic(p.b)]; break; } catch (e) {}
+      }
+      if (!chars) {
+        this.device.gatt.disconnect();
+        this.onLink("disconnected", "Connected, but this device has no Flipper serial service. On the Flipper open Toy Pad Emulator > LEGO Dimensions > Emulate and hold Left to turn the Bluetooth link on.");
+        return;
+      }
+      const canNotify = (c) => c.properties.notify || c.properties.indicate;
+      const canWrite = (c) => c.properties.write || c.properties.writeWithoutResponse;
+      const writeCh = chars.find((c) => canWrite(c) && !canNotify(c)) || chars.find(canWrite);
+      const notifyCh = chars.find((c) => c !== writeCh && canNotify(c));
+      if (!writeCh || !notifyCh) throw new Error("serial characteristics do not look right");
+      this.writeCh = writeCh; this.withResponse = !!writeCh.properties.write;
+      stage = "subscribing to Flipper replies (accept the pairing request; the PIN is on the Flipper screen)";
+      notifyCh.addEventListener("characteristicvaluechanged", (e) => { const v = e.target.value; this.onData(new Uint8Array(v.buffer, v.byteOffset, v.byteLength).slice()); });
+      await notifyCh.startNotifications();
+      this.alive = true;
+      this.onLink("connected", `${this.device.name || "Flipper"} (chunk ${this.chunk} bytes)`);
+    } catch (e) {
+      if (e && e.name === "NotFoundError") { this.onLink("disconnected", "No device chosen"); return; }
+      try { this.device && this.device.gatt.connected && this.device.gatt.disconnect(); } catch (x) {}
+      this.onLink("disconnected", `Could not connect while ${stage}: ${e.name}: ${e.message}`);
+    }
+  }
+  disconnect() { this.q = []; if (this.device && this.device.gatt && this.device.gatt.connected) this.device.gatt.disconnect(); }
+  send(data) { this.q.push(data); this.drain(); }
+  async drain() {
+    if (this.busy) return; this.busy = true;
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    try {
+      while (this.q.length && this.alive) {
+        const data = this.q.shift();
+        try {
+          for (let i = 0; i < data.length; i += this.chunk) {
+            const piece = data.slice(i, i + this.chunk);
+            if (this.withResponse) await this.writeCh.writeValueWithResponse(piece);
+            else { await this.writeCh.writeValueWithoutResponse(piece); await sleep(20); }
+          }
+          await sleep(150);
+        } catch (e) { this.onLog(`BLE write failed: ${e.message}`); this.q = []; }
+      }
+    } finally { this.busy = false; }
+  }
+}
+/* ===== UI ===== */
+const $ = (id) => document.getElementById(id);
+const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+let session = null, selected = null, tab = "mini", favs = new Set(lsGet("ldFavs", []));
+function log(m) { const el = $("log"); el.textContent += `${new Date().toLocaleTimeString()}  ${m}\n`; el.scrollTop = el.scrollHeight; }
+function setMsg(t, bad = false) { const el = $("msg"); el.textContent = t || ""; el.className = bad ? "r" : ""; }
+
+function drawPad() {
+  const svg = $("padSvg"); const NS = "http://www.w3.org/2000/svg";
+  svg.textContent = "";
+  const add = (tag, attrs, parent = svg, text = null) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text !== null) e.textContent = text; parent.appendChild(e); return e; };
+  add("text", { x: 21, y: 10.5, class: "padname" }, svg, "LEFT PAD");
+  add("text", { x: 50, y: 3.4, class: "padname" }, svg, "CENTRE");
+  add("text", { x: 79, y: 10.5, class: "padname" }, svg, "RIGHT PAD");
+  SPOTS.forEach((s, i) => {
+    const b = session ? session.boxes[i] : { kind: 0 };
+    const cls = ["box", b.kind ? "filled" : "", b.kind === KIND.VEHICLE ? "vehicle" : "", selected === i && !b.kind ? "target" : "", selected === i && b.kind ? "source" : "", session && session.pending.has(i) ? "busy" : ""].join(" ");
+    const g = add("g", { class: cls });
+    if (i === 1) add("circle", { class: "shape", cx: s.x, cy: s.y, r: 8 }, g); else add("rect", { class: "shape", x: s.x - 8, y: s.y - 6.5, width: 16, height: 13, rx: 2.5 }, g);
+    add("text", { x: s.x, y: s.y - 7.6, class: "num" }, g, String(i + 1));
+    if (b.kind) {
+      const nm = nameOf(b.kind, b.id); const short = nm.length > 11 ? nm.slice(0, 10) + "…" : nm;
+      add("text", { x: s.x, y: s.y + 1 }, g, short);
+    }
+    g.addEventListener("click", () => {
+      /* A token is picked up (selected) and another spot is tapped: move it there, or switch the two. */
+      if (selected !== null && selected !== i && session && session.connected && session.boxes[selected].kind) {
+        const [ok, m] = session.move(selected, i);
+        setMsg(m, !ok); if (ok) selected = null; render(); return;
+      }
+      selected = selected === i ? null : i;
+      if (selected !== null && session && session.boxes[selected].kind) setMsg(`${nameOf(session.boxes[selected].kind, session.boxes[selected].id).replace(/^\* /, "")} picked up: tap another spot to move it there (a token already there switches places).`);
+      else setMsg("");
+      render();
+    });
+  });
+}
+
+function renderStatus() {
+  const st = $("status"); st.textContent = "";
+  const row = (label, text, cls = "") => { const d = document.createElement("div"); const b = document.createElement("b"); b.textContent = label + " "; const s = document.createElement("span"); s.textContent = text; if (cls) s.className = cls; d.append(b, s); st.appendChild(d); };
+  if (!session || !session.connected) { row("Bluetooth:", session && session.linkDetail ? session.linkDetail : "not connected", "w"); }
+  else {
+    row("Bluetooth:", session.linkDetail || "connected", "g");
+    if (session.problem) row("Flipper:", session.problem, "r");
+    else if (session.usb === null) row("Console:", "asking the Flipper…", "w");
+    else row("Console:", USB_TEXT[session.usb] || `state ${session.usb}`, session.usb === 1 ? "g" : "w");
+  }
+  const on = !!(session && session.connected);
+  $("bConnect").style.display = on ? "none" : ""; $("bDisconnect").style.display = on ? "" : "none";
+  $("bClear").disabled = !on; $("bRemove").disabled = !(on && selected !== null && session.boxes[selected].kind);
+  const vsel = on && selected !== null && session.boxes[selected].kind === KIND.VEHICLE;
+  $("bSaveSel").disabled = !vsel; $("bToFlip").disabled = !vsel; $("bFromFlip").disabled = !on;
+}
+
+function renderList() {
+  const q = $("q").value.trim().toLowerCase(); const list = $("list"); list.textContent = "";
+  const src = tab === "veh" ? VEHICLES.map((e) => [KIND.VEHICLE, ...e]) : tab === "fav" ? [...MINIFIGS.map((e) => [KIND.MINIFIG, ...e]), ...VEHICLES.map((e) => [KIND.VEHICLE, ...e])].filter((e) => favs.has(e[0] + ":" + e[1])) : MINIFIGS.map((e) => [KIND.MINIFIG, ...e]);
+  const shown = src.filter((e) => !q || e[2].toLowerCase().includes(q) || String(e[1]).includes(q));
+  if (!shown.length) { const p = document.createElement("p"); p.className = "hint"; p.textContent = tab === "fav" ? "No favorites yet. Tap the star next to a token." : "Nothing matches."; list.appendChild(p); return; }
+  const onPad = new Set(session ? session.boxes.filter((b) => b.kind).map((b) => b.kind + ":" + b.id) : []);
+  for (const [kind, id, name] of shown) {
+    const row = document.createElement("div"); row.className = "row" + (onPad.has(kind + ":" + id) ? " onp" : "");
+    const thumb = document.createElement("div"); thumb.className = "thumb"; thumb.style.background = kind === KIND.VEHICLE ? "#c4602a" : "#2a6df4"; thumb.textContent = (name.replace(/^\* /, "")[0] || "?").toUpperCase();
+    const t = document.createElement("div"); t.className = "t"; const a = document.createElement("div"); a.textContent = name; const s = document.createElement("small"); s.textContent = (kind === KIND.VEHICLE ? "Vehicle " : "Minifigure ") + id; t.append(a, s);
+    const fav = document.createElement("button"); fav.className = "fav" + (favs.has(kind + ":" + id) ? " on" : ""); fav.textContent = "★";
+    fav.onclick = (e) => { e.stopPropagation(); const k = kind + ":" + id; if (!favs.delete(k)) favs.add(k); lsSet("ldFavs", [...favs]); renderList(); };
+    row.append(thumb, t, fav);
+    row.onclick = () => placeToken(kind, id);
+    list.appendChild(row);
+  }
+}
+
+function placeToken(kind, id) {
+  if (!session || !session.connected) return setMsg("Connect to the Flipper first.", true);
+  const [ok, m] = session.place(kind, id, selected);
+  setMsg(m, !ok);
+  if (ok) selected = null;
+  render();
+}
+function render() { drawPad(); renderStatus(); renderList(); renderLib(); }
+
+
+/* ===== Saved vehicles (the vehicle's own memory: upgrades, levels) ===== */
+const lib = new Map(); // uid hex -> { key, uid, data, id, label, updated }
+let libReady = false, autoKeep = lsGet("ldAutoKeep", true);
+const wantSave = new Set(); // spots the user asked to save
+const fl = { names: [], queue: [], listing: false, reading: null, timer: null, added: 0, total: 0 };
+const mem = { db: null };
+function dbOpen() {
+  return new Promise((res) => {
+    try {
+      const r = indexedDB.open("ldvehicles", 1);
+      r.onupgradeneeded = () => r.result.createObjectStore("v", { keyPath: "key" });
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => res(null);
+    } catch (e) { res(null); }
+  });
+}
+async function dbDo(mode, fn) {
+  if (!mem.db) return null;
+  return new Promise((res) => { try { const tx = mem.db.transaction("v", mode); const rq = fn(tx.objectStore("v")); tx.oncomplete = () => res(rq ? rq.result : true); tx.onerror = () => res(null); } catch (e) { res(null); } });
+}
+async function libLoad() {
+  mem.db = await dbOpen();
+  const all = await dbDo("readonly", (st) => st.getAll());
+  if (all) for (const r of all) lib.set(r.key, r);
+  else log("Note: this browser would not open its database; saved vehicles last until you close the page. Use Export.");
+  libReady = true; renderLib();
+}
+const libPut = (r) => { lib.set(r.key, r); dbDo("readwrite", (st) => st.put(r)); };
+const libDel = (k) => { lib.delete(k); dbDo("readwrite", (st) => st.delete(k)); };
+const vehName = (id) => nameOf(KIND.VEHICLE, id).replace(/^\* /, "");
+const vehDisplay = (r) => r.label || vehName(r.id);
+/* Add or update from live data. Returns "new", "updated" or "same". */
+function libUpsert(uid, data, label = "") {
+  const key = hexOf(uid), id = vehIdOf(data), old = lib.get(key), dh = hexOf(data);
+  if (old && hexOf(old.data) === dh) return "same";
+  libPut({ key, uid, data, id, label: old ? old.label : label, updated: Date.now() });
+  return old ? "updated" : "new";
+}
+function onVehicleToken(box, uid, data, asked) {
+  if (box === BOX_FILE) { onFileToken(uid, data); return; }
+  const exists = lib.has(hexOf(uid));
+  const manual = wantSave.delete(box);
+  if (!manual && !exists && !(autoKeep && !asked)) { render(); return; }
+  const r = libUpsert(uid, data);
+  const nm = vehName(vehIdOf(data));
+  if (r === "new") setMsg(`Saved ${nm}${manual ? "" : " (the game changed it)"}.`);
+  else if (r === "updated") setMsg(`Updated ${nm}: its upgrades changed.`);
+  else if (manual) setMsg(`${nm} is already saved, nothing changed.`);
+  renderLib(); render();
+}
+function libPlace(r) {
+  if (!session || !session.connected) return setMsg("Connect to the Flipper first.", true);
+  const [ok, m] = session.placeVehicle(r, selected);
+  setMsg(m, !ok); if (ok) selected = null; render();
+}
+function renderLib() {
+  const el = $("libList"); if (!el) return; el.textContent = "";
+  const rows = [...lib.values()].sort((a, b) => b.updated - a.updated);
+  if (!rows.length) { const p = document.createElement("p"); p.className = "hint"; p.textContent = libReady ? "Nothing saved yet. Put a vehicle on the pad and tap its spot, then Save selected spot (or leave automatic saving on and just play)." : "Loading…"; el.appendChild(p); return; }
+  const onPad = new Set(session ? session.tokens.filter(Boolean).map((t) => hexOf(t.uid)) : []);
+  for (const r of rows) {
+    const row = document.createElement("div"); row.className = "row veh" + (onPad.has(r.key) ? " onp" : "");
+    const th = document.createElement("div"); th.className = "thumb"; th.textContent = (vehName(r.id)[0] || "?").toUpperCase();
+    const t = document.createElement("div"); t.className = "t"; const a = document.createElement("div"); a.textContent = vehDisplay(r);
+    const sm = document.createElement("small"); sm.textContent = `${r.key.slice(2, 10)} · upgrades ${u32At(r.data, 0x23 * 4).toString(16).padStart(8, "0")} ${u32At(r.data, 0x25 * 4).toString(16).padStart(8, "0")} · ${new Date(r.updated).toLocaleDateString()}`;
+    t.append(a, sm);
+    const acts = document.createElement("div"); acts.className = "acts";
+    const ren = document.createElement("button"); ren.textContent = "✎"; ren.title = "Rename";
+    ren.onclick = (e) => { e.stopPropagation(); const v = prompt("Name for this vehicle", vehDisplay(r)); if (v !== null) { libPut({ ...r, label: v.trim() === vehName(r.id) ? "" : v.trim() }); renderLib(); } };
+    const del = document.createElement("button"); del.textContent = "✕"; del.title = "Delete";
+    del.onclick = (e) => { e.stopPropagation(); if (confirm(`Delete saved ${vehDisplay(r)}? Its upgrades cannot be recovered unless you exported them.`)) { libDel(r.key); renderLib(); } };
+    acts.append(ren, del); row.append(th, t, acts); row.onclick = () => libPlace(r); el.appendChild(row);
+  }
+}
+function saveSelected() {
+  if (!session || !session.connected || selected === null || session.boxes[selected].kind !== KIND.VEHICLE) return setMsg("Tap a spot that has a vehicle on it first.", true);
+  wantSave.add(selected); session.asked.delete(selected); session.requestToken(selected); setMsg("Asking the Flipper for the vehicle's memory…");
+}
+function saveOnFlipper() {
+  if (!session || !session.connected || selected === null || session.boxes[selected].kind !== KIND.VEHICLE) return setMsg("Tap a spot that has a vehicle on it first.", true);
+  flipSaveBox = selected; session.saveToFlipper(selected);
+}
+let flipSaveBox = null;
+/* Import every vehicle saved on the Flipper (its own "Saved vehicles" menu). */
+function importFromFlipper() {
+  if (!session || !session.connected) return setMsg("Connect to the Flipper first.", true);
+  if (fl.listing || fl.reading) return;
+  fl.names = []; fl.queue = []; fl.added = 0; fl.listing = true; setMsg("Listing the vehicles saved on the Flipper…");
+  fl.timer = setTimeout(() => { if (fl.listing) flFinishList(); }, 8000);
+  session.listSaved();
+}
+function flFinishList() {
+  clearTimeout(fl.timer); fl.listing = false; fl.queue = fl.names.slice(); fl.total = fl.queue.length;
+  if (!fl.total) return setMsg("The Flipper has no saved vehicles.");
+  flNext();
+}
+function flNext() {
+  clearTimeout(fl.timer);
+  if (!fl.queue.length) { fl.reading = null; setMsg(`Imported ${fl.added} of ${fl.total} saved vehicles from the Flipper.`); renderLib(); return; }
+  fl.reading = fl.queue.shift(); setMsg(`Reading ${fl.total - fl.queue.length} of ${fl.total} from the Flipper…`);
+  fl.timer = setTimeout(flNext, 6000); // a file that never answers is skipped
+  if (!session || !session.readSaved(fl.reading)) { fl.queue = []; flNext(); }
+}
+function onFileToken(uid, data) {
+  if (!fl.reading) return;
+  if (vehIdOf(data) && libUpsert(uid, data) !== "same") fl.added++;
+  flNext();
+}
+function onLdResult(r) {
+  if (r.req === MSG.SAVE_VEHICLE) {
+    if (r.code === 0) setMsg(`Saved on the Flipper (spot ${r.box + 1}). It is in the Flipper's Saved vehicles menu.`);
+    else setMsg("The Flipper could not save that vehicle (is there one on that spot?).", true);
+  } else if (r.req === MSG.SAVED_READ && fl.reading && r.code) flNext();
+  else if (r.req === MSG.GET && r.code) { wantSave.delete(r.box); }
+}
+function exportLib() {
+  const data = { format: "toybox-ld-vehicles", version: 1, vehicles: [...lib.values()].map((r) => ({ uid: hexOf(r.uid), data: hexOf(r.data), label: r.label, updated: r.updated })) };
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: "application/json" }));
+  a.download = "lego-dimensions-vehicles.json"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+async function importLibFile(file) {
+  try {
+    const j = JSON.parse(await file.text()); if (j.format !== "toybox-ld-vehicles" || !Array.isArray(j.vehicles)) throw new Error("not a vehicle export");
+    let n = 0;
+    for (const v of j.vehicles) {
+      const uid = unhex(String(v.uid || "")), data = unhex(String(v.data || ""));
+      if (uid.length !== UID_SIZE || data.length !== DATA_SIZE || !vehIdOf(data)) continue;
+      const key = hexOf(uid), old = lib.get(key);
+      if (old && old.updated >= (v.updated || 0)) continue; // keep the newer copy
+      libPut({ key, uid, data, id: vehIdOf(data), label: String(v.label || ""), updated: v.updated || Date.now() }); n++;
+    }
+    setMsg(`Imported ${n} vehicle${n === 1 ? "" : "s"}.`); renderLib();
+  } catch (e) { setMsg(`Could not read that file: ${e.message}`, true); }
+}
+
+function startSession() {
+  if (session) return;
+  session = new LdSession(new WebBleTransport(), log);
+  session.onChange = () => {
+    const r = session.lastResult; if (r && r.code) { if (![MSG.GET, MSG.SAVED_READ, MSG.SAVE_VEHICLE].includes(r.req)) setMsg(`Flipper: ${r.text}`, true); session.lastResult = null; }
+    render();
+  };
+  session.onToken = onVehicleToken;
+  session.onResult = onLdResult;
+  session.onSavedItem = (name) => { if (!fl.listing) return; if (name === null) flFinishList(); else if (fl.names.length < 60) fl.names.push(name); };
+}
+$("bConnect").onclick = async () => { startSession(); setMsg(""); await session.transport.connect(); };
+$("bDisconnect").onclick = () => { if (session) session.transport.disconnect(); };
+$("bRemove").onclick = () => { if (session && selected !== null) { session.remove(selected); selected = null; render(); } };
+$("bClear").onclick = () => { if (session && confirm("Take every token off the pad?")) session.clear(); };
+for (const [id, t] of [["tabMini", "mini"], ["tabVeh", "veh"], ["tabFav", "fav"]]) $(id).onclick = () => { tab = t; for (const [i2, t2] of [["tabMini", "mini"], ["tabVeh", "veh"], ["tabFav", "fav"]]) $(i2).className = t === t2 ? "on" : ""; renderList(); };
+$("q").oninput = renderList;
+$("bSaveSel").onclick = saveSelected; $("bToFlip").onclick = saveOnFlipper; $("bFromFlip").onclick = importFromFlipper;
+$("autoKeep").checked = autoKeep; $("autoKeep").onchange = (e) => { autoKeep = e.target.checked; lsSet("ldAutoKeep", autoKeep); };
+$("bExport").onclick = exportLib; $("bImport").onclick = () => $("fImport").click();
+$("fImport").onchange = (e) => { const f = e.target.files[0]; e.target.value = ""; if (f) importLibFile(f); };
+setInterval(() => { if (session && session.connected) session.requestStatus(); }, 5000); // safety net; the Flipper also pushes changes
+if (!WebBleTransport.supported()) setMsg("This browser has no Web Bluetooth. Use Chrome on Android or desktop (iPhone: the free Bluefy browser).", true);
+render();
+libLoad();
+</script>
+</body>
+</html>

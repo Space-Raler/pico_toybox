@@ -1,0 +1,1549 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e1015">
+<title>Skylanders Portal</title>
+<style>
+:root{--bg:#0e1015;--panel:#151821;--body:#171a22;--rim:#2b3040;--empty:#1c202b;--text:#e8ecf3;--muted:#8a93a6;--good:#3be8a0;--warn:#f2c14e;--bad:#ff5a4d;--p1:#3aa0ff;--p2:#ff6a4d}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.35 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+body{padding:env(safe-area-inset-top) 12px calc(env(safe-area-inset-bottom) + 12px)}
+header{display:flex;gap:8px;align-items:center;padding:10px 0;position:sticky;top:0;background:var(--bg);z-index:5;flex-wrap:wrap}
+h1{font-size:17px;margin:0;flex:1 1 auto}
+button,.btn{background:var(--rim);color:var(--text);border:0;border-radius:10px;padding:10px 14px;font:inherit;cursor:pointer;min-height:42px}
+button:active,.btn:active{filter:brightness(1.3)}
+button.primary{background:#2a6df4}
+button.danger{background:#5a2a2e}
+button.on{background:#2a6df4}
+button:disabled{opacity:.4}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+.status{background:var(--panel);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--muted);display:grid;gap:2px}
+.status b{font-weight:600}
+.g{color:var(--good)}.w{color:var(--warn)}.r{color:var(--bad)}
+#msg{min-height:20px;margin:8px 2px;font-size:13px}
+.portal{background:var(--body);border:2px solid var(--rim);border-radius:22px;padding:6px;margin:8px 0}
+svg{width:100%;height:auto;display:block;touch-action:manipulation;user-select:none}
+.slot{cursor:pointer}
+.slot .ring{fill:var(--empty);stroke:var(--rim);stroke-width:5}
+.slot.target .ring{stroke:#fff;stroke-width:7;stroke-dasharray:14 10}
+.sl{fill:var(--muted);font-size:21px;text-anchor:middle;pointer-events:none}
+.nm{fill:#fff;font-size:22px;font-weight:600;text-anchor:middle;pointer-events:none;paint-order:stroke;stroke:#000;stroke-width:5px}
+.ini{fill:#fff;font-size:44px;font-weight:700;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.pl{font-size:26px;font-weight:700;text-anchor:middle;letter-spacing:3px}
+section{background:var(--panel);border-radius:14px;padding:10px;margin:10px 0}
+section h2{font-size:14px;margin:0 0 8px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+input[type=search],input[type=text],input[type=number],select{width:100%;background:var(--empty);border:1px solid var(--rim);color:var(--text);border-radius:10px;padding:10px;font:inherit;min-height:42px}
+.list{display:grid;gap:6px;margin-top:8px;max-height:52vh;overflow:auto;-webkit-overflow-scrolling:touch}
+.row{display:flex;align-items:center;gap:10px;background:var(--empty);border-radius:10px;padding:6px 8px;border:2px solid transparent;cursor:pointer}
+.row.sel{border-color:#2a6df4}
+.row.onp{opacity:.55}
+.thumb{position:relative}.thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top}
+.thumb{width:44px;height:44px;border-radius:50%;flex:none;overflow:hidden;display:grid;place-items:center;font-weight:700;color:#fff;background-size:cover;background-position:center top}
+.row .t{flex:1;min-width:0}.row .t div:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .t small{color:var(--muted)}
+.row .fav{background:transparent;padding:6px 8px;min-height:36px;font-size:20px;line-height:1;color:var(--muted)}.row .fav.on{color:#ffc928}
+.row .more{background:transparent;padding:6px 10px;min-height:36px;color:var(--muted)}
+#log{font:11px/1.4 ui-monospace,monospace;color:var(--muted);max-height:160px;overflow:auto;white-space:pre-wrap}
+label.chk{display:flex;gap:8px;align-items:center;font-size:14px;margin-top:8px}
+.hint{color:var(--muted);font-size:12px;margin:6px 0 0}
+input[type=file]{display:none}
+dialog{background:var(--panel);color:var(--text);border:1px solid var(--rim);border-radius:16px;max-width:92vw;width:420px}
+dialog::backdrop{background:#000a}
+dialog button{display:block;width:100%;margin:6px 0;text-align:left}
+.fld{display:grid;grid-template-columns:7.5em 1fr;gap:6px 8px;align-items:center;margin:10px 0}.fld label{color:var(--muted);font-size:13px}
+dialog .fld button{display:inline-block;width:auto;margin:0 6px 0 0;min-height:36px;padding:6px 10px}
+dialog pre.info{white-space:pre-wrap;font-size:12px;color:var(--muted);margin:8px 0}
+.gh{position:sticky;top:0;background:var(--panel);color:var(--muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;padding:6px 2px 2px;z-index:1}
+</style>
+</head>
+<body>
+<header>
+  <h1>Skylanders Portal</h1>
+  <button id="bConnect" class="primary">Connect</button>
+  <button id="bDemo">Demo</button>
+</header>
+<div class="status" id="status"></div>
+<div id="msg"></div>
+<div class="portal"><svg id="svg" xmlns="http://www.w3.org/2000/svg"></svg></div>
+<div class="bar">
+  <button id="bPlaceSel">Place selected</button>
+  <button id="bPlaceAll">Place all</button>
+  <button id="bClear" class="danger">Clear portal</button>
+</div>
+<p class="hint">Tap a figure below to select it, then tap a slot. Tap a figure on the portal to lift it off. Double-tap a list item to put it on the next free slot.</p>
+<section>
+  <h2>Figures</h2>
+  <div class="bar">
+    <label class="btn" for="fFiles">Add dumps…</label>
+    <label class="btn" for="fFolder">Add folder…</label>
+    <select id="gameDirSel" title="Add a folder for one game"></select>
+    <label class="btn" for="fPics">Pictures…</label>
+    <label class="btn" for="fPicDir">Picture folder…</label>
+    <label class="btn" for="fNames">names.csv…</label>
+    <button id="bWiki">Wiki pictures…</button>
+    <button id="bFlipperDumps">Find dumps on Flipper</button>
+    <button id="bSaveFlipper">Save selected to Flipper</button>
+    <button id="bExport">Export all (zip)</button>
+    <button id="bMissing">Missing pictures…</button>
+    <button id="bClearAll" class="danger">Remove all…</button>
+  </div>
+  <input id="fFiles" type="file" multiple>
+  <input id="fFolder" type="file" webkitdirectory multiple>
+  <input id="fGameDir" type="file" webkitdirectory multiple>
+  <input id="fPics" type="file" accept="image/*" multiple>
+  <input id="fPicDir" type="file" webkitdirectory multiple>
+  <input id="fNames" type="file" accept=".csv,text/csv,text/plain">
+  <input type="search" id="q" placeholder="Search figures">
+  <div class="bar" style="margin-bottom:0">
+    <select id="filter" style="flex:1"><option>All</option><option>Favorites</option><option>Not on portal</option><option>On portal</option></select>
+    <button id="bDemoGame" style="display:none"></button>
+  </div>
+  <div class="bar" style="margin-bottom:0">
+    <select id="gameF" style="flex:1"></select><select id="kindF" style="flex:1"></select>
+    <select id="groupBy" style="flex:1"><option value="">Flat list</option><option value="game">Folders: game</option><option value="kind">Folders: type</option><option value="cat">Folders: category</option><option value="path">Folders: game › category</option></select>
+  </div>
+  <div class="bar" style="margin-bottom:0"><select id="catF" style="flex:1"></select></div>
+  <div class="list" id="list"></div>
+  <label class="chk"><input type="checkbox" id="wb" checked> Keep game progress sent back by the Flipper</label>
+  <p class="hint">Figures, saved game progress and pictures are stored in this browser's own database (IndexedDB), and favorites/settings in localStorage. Not cookies, and nothing is uploaded. They stay on this device and browser only, and clearing site data erases them, so tap “Export all (zip)” now and then as a backup.</p>
+</section>
+<section><h2>Log</h2><div id="log"></div></section>
+<dialog id="dlg"></dialog>
+<script>
+/* ===== CORE (no DOM): protocol, layout, figures, session, transports ===== */
+const VERSION = 2, SOF = 0xA5, FIGURE_SIZE = 1024, MAX_PAYLOAD = 1 + FIGURE_SIZE, SLOT_COUNT = 8;
+const MSG = { HELLO: 1, LOAD: 2, REMOVE: 3, CLEAR: 4, STATUS_REQ: 5, DUMP_LIST: 6, DUMP_READ: 7, DUMP_WRITE_BEGIN: 8, DUMP_WRITE_CHUNK: 9, DUMP_WRITE_END: 10, STATUS: 0x81, RESULT: 0x82, SAVE: 0x83, DUMP_LIST_ITEM: 0x84, DUMP_DATA: 0x85 };
+const RESULT_TEXT = { 0: "ok", 1: "bad slot", 2: "bad length", 3: "nothing in that slot", 4: "unknown command" };
+const USB_TEXT = { 0: "Flipper not plugged into a console", 1: "console found the portal", 2: "console connected", 3: "game talking" };
+const GAME_NAMES = ["Swap Force", "Trap Team", "Imaginators", "SuperChargers", "Giants", "Spyro's Adventure"];
+const [SWAP_FORCE, TRAP_TEAM, IMAGINATORS, SUPERCHARGERS, GIANTS, SPYROS_ADVENTURE] = [0, 1, 2, 3, 4, 5];
+
+const SERIAL_PROFILES = [
+  { service: "8fe5b3d5-2e7f-4a98-2a48-7acc60fe0000", a: "19ed82ae-ed21-4c9d-4145-228e61fe0000", b: "19ed82ae-ed21-4c9d-4145-228e62fe0000" },
+  { service: "6e400001-b5a3-f393-e0a9-e50e24dcca9e", a: "6e400002-b5a3-f393-e0a9-e50e24dcca9e", b: "6e400003-b5a3-f393-e0a9-e50e24dcca9e" },
+];
+
+function crc8(data, crc = 0) {
+  for (const byte of data) {
+    crc ^= byte;
+    for (let i = 0; i < 8; i++) crc = (crc & 0x80) ? ((crc << 1) ^ 0x07) & 0xFF : (crc << 1) & 0xFF;
+  }
+  return crc;
+}
+function encode(type, payload = new Uint8Array(0)) {
+  if (payload.length > MAX_PAYLOAD) throw new Error("payload too large");
+  const body = new Uint8Array(3 + payload.length);
+  body[0] = type; body[1] = payload.length & 0xFF; body[2] = payload.length >> 8;
+  body.set(payload, 3);
+  const out = new Uint8Array(body.length + 2);
+  out[0] = SOF; out.set(body, 1); out[out.length - 1] = crc8(body);
+  return out;
+}
+class Parser {
+  constructor() { this.buf = []; this.bad = 0; }
+  feed(data) {
+    for (const b of data) this.buf.push(b);
+    const frames = [];
+    for (;;) {
+      const start = this.buf.indexOf(SOF);
+      if (start < 0) { this.buf = []; break; }
+      if (start) this.buf.splice(0, start);
+      if (this.buf.length < 4) break;
+      const length = this.buf[2] | (this.buf[3] << 8);
+      if (length > MAX_PAYLOAD) { this.bad++; this.buf.shift(); continue; }
+      const total = 5 + length;
+      if (this.buf.length < total) break;
+      const body = this.buf.slice(1, 4 + length);
+      if (crc8(body) === this.buf[total - 1]) {
+        frames.push({ type: body[0], payload: Uint8Array.from(body.slice(3)) });
+        this.buf.splice(0, total);
+      } else { this.bad++; this.buf.shift(); }
+    }
+    return frames;
+  }
+}
+const P = {
+  hello: () => encode(MSG.HELLO, Uint8Array.of(VERSION)),
+  load(slot, fig) {
+    if (fig.length !== FIGURE_SIZE) throw new Error("figure must be 1024 bytes");
+    const p = new Uint8Array(1 + FIGURE_SIZE); p[0] = slot; p.set(fig, 1); return encode(MSG.LOAD, p);
+  },
+  remove: (slot) => encode(MSG.REMOVE, Uint8Array.of(slot)),
+  clear: () => encode(MSG.CLEAR),
+  statusReq: () => encode(MSG.STATUS_REQ),
+  parseStatus(p) {
+    if (p.length < 5) throw new Error("short STATUS");
+    const mask = p[2] | (p[3] << 8), present = new Set();
+    for (let i = 0; i < 8; i++) if (mask & (1 << i)) present.add(i);
+    return { version: p[0], usb: p[1], present, game: p[4] };
+  },
+  parseResult(p) { if (p.length < 3) throw new Error("short RESULT"); return { request: p[0], slot: p[1], code: p[2] }; },
+  parseSave(p) { if (p.length !== 1 + FIGURE_SIZE) throw new Error("bad SAVE length"); return [p[0], p.slice(1)]; },
+};
+
+/* ---- layout ---- */
+function slotLabel(game, slot) {
+  if (game === null || game === undefined) return `Slot ${slot + 1}`;
+  const row = slot % 4, player = slot < 4 ? 1 : 2, plain = [SWAP_FORCE, GIANTS, SPYROS_ADVENTURE].includes(game);
+  let kind, num;
+  if (row < 2) {
+    const special = row === 1 && !plain;
+    kind = special ? (game === TRAP_TEAM ? "Trap" : game === SUPERCHARGERS ? "Vehicle" : "Crystal") : "Figure";
+    num = plain ? row + 1 : 1;
+  } else { kind = "Item"; num = row - 1; }
+  return `${kind} ${num} (P${player})`;
+}
+function autoSlot(occupied) { for (let s = 0; s < SLOT_COUNT; s++) if (!occupied.has(s)) return s; return null; }
+
+/* ---- figures / names / pictures ---- */
+const NAMES = { 0: "Whirlwind", 1: "Sonic Boom", 2: "Warnado", 3: "Lightning Rod", 4: "Bash", 5: "Terrafin", 6: "Dino-Rang", 7: "Prism Break", 8: "Sunburn", 9: "Eruptor", 10: "Ignitor", 11: "Flameslinger", 12: "Zap", 13: "Wham-Shell", 14: "Gill Grunt", 15: "Slam Bam", 16: "Spyro", 17: "Voodood", 18: "Double Trouble", 19: "Trigger Happy", 20: "Drobot", 21: "Drill Sergeant", 22: "Boomer", 23: "Wrecking Ball", 24: "Camo", 25: "Zook", 26: "Stealth Elf", 27: "Stump Smash", 28: "Dark Spyro", 29: "Hex", 30: "Chop Chop", 31: "Ghost Roaster", 32: "Cynder" };
+const nameOverrides = {};
+function nameFor(id) { return nameOverrides[id] || NAMES[id] || null; }
+function loadNamesCsv(text) {
+  let n = 0;
+  for (const line of text.split(/\r?\n/)) {
+    const i = line.indexOf(","); if (i < 0) continue;
+    const id = Number(line.slice(0, i).trim().replace(/^﻿/, "")), name = line.slice(i + 1).trim().replace(/^"|"$/g, "");
+    if (!Number.isInteger(id) || !name) continue;
+    nameOverrides[id] = name; n++;
+  }
+  return n;
+}
+const norm = (t) => t.toLowerCase().replace(/[^a-z0-9]/g, "");
+const stem = (f) => f.replace(/\.[^.]*$/, "");
+const IMAGE_RE = /\.(png|gif|jpe?g|bmp|webp)$/i, BIN_RE = /\.(bin|sky|dump|dmp)$/i;
+function makeFigure(file, data, path = "", id = path || file) {
+  if (data.length !== FIGURE_SIZE) throw new Error(`${file}: not a 1024-byte Skylanders dump (it is ${data.length} bytes)`);
+  const u16 = (o) => data[o] | (data[o + 1] << 8);
+  const serial = (data[0] | (data[1] << 8) | (data[2] << 16) | (data[3] << 24)) >>> 0;
+  return { file, data, serial, charId: u16(0x10), variant: u16(0x1C), path, id };
+}
+const figLabel = (f) => nameFor(f.charId) || stem(f.file);
+const sameDump = (a, b) => a === b || (a.serial === b.serial && a.charId === b.charId);
+
+/* ---- session ---- */
+const LOCAL = "local", SENDING = "sending", CONFIRMED = "confirmed", ERROR = "error";
+class Session {
+  constructor(transport, onLog = () => {}, onSave = () => {}) {
+    this.transport = transport; this.onLog = onLog; this.onSave = onSave;
+    this.placed = new Map(); this.state = new Map(); this.flipperSlots = new Set(); this.holding = new Set();
+    this.sentAt = new Map(); this.tries = new Map(); this.absent = new Map(); this.confirmedAt = new Map();
+    this.link = "disconnected"; this.linkDetail = ""; this.usb = null; this.game = null; this.problem = null;
+    this.saves = 0; this.frames = 0; this.writeBack = true; this.synced = false; this.rejected = false; this.parser = new Parser();
+    this.bind(transport);
+  }
+  bind(t) {
+    t.onLink = (s, d) => this.onLinkEvent(s, d);
+    t.onData = (b) => { for (const f of this.parser.feed(b)) this.onFrame(f); this.changed(); };
+    t.onLog = (m) => this.onLog(m);
+    t.onScan = () => {};
+  }
+  changed() { if (this.onChange) this.onChange(); }
+  get connected() { return this.link === "connected"; }
+  get gameName() { return this.game === null ? null : GAME_NAMES[this.game]; }
+  consoleText() {
+    if (!this.connected) return "console: unknown";
+    if (this.usb === null) return "console: waiting for Flipper status...";
+    return USB_TEXT[this.usb] || `console state ${this.usb}`;
+  }
+  slotName(s) { return slotLabel(this.game, s); }
+  get full() { return this.placed.size >= SLOT_COUNT; }
+  findSame(fig) { for (const [s, f] of [...this.placed].sort((a, b) => a[0] - b[0])) if (sameDump(f, fig)) return [s, f]; return null; }
+  slotOf(fig) { const r = this.findSame(fig); return r ? r[0] : null; }
+  send(frame) { this.transport.send(frame); }
+  place(fig, slot = null) {
+    if (slot !== null && !(slot >= 0 && slot < SLOT_COUNT)) return [false, "No such slot"];
+    const dup = this.findSame(fig);
+    if (dup) {
+      const [where, other] = dup;
+      if (other === fig) return [false, `${figLabel(fig)} is already on ${this.slotName(where)}; lift it off first`];
+      return [false, `${figLabel(fig)} has the same serial as ${figLabel(other)}, already on ${this.slotName(where)}; one figure cannot be on two slots`];
+    }
+    if (slot === null) {
+      slot = autoSlot(new Set(this.placed.keys()));
+      if (slot === null) return [false, `The portal is full (${SLOT_COUNT} figures); no free slot for ${figLabel(fig)}`];
+    }
+    const replaced = this.placed.get(slot);
+    this.placed.set(slot, fig);
+    if (this.connected) {
+      this.state.set(slot, SENDING);
+      this.tries.set(slot, 0); this.absent.delete(slot); this.confirmedAt.delete(slot);
+      if (this.synced) this.sendLoad(slot, fig, replaced || this.flipperSlots.has(slot));
+    } else this.state.set(slot, LOCAL);
+    const where = this.slotName(slot);
+    this.onLog(`${figLabel(fig)} -> ${where}` + (replaced ? ` (replacing ${figLabel(replaced)})` : ""));
+    this.changed();
+    return [true, replaced ? `${figLabel(fig)} placed on ${where}, replacing ${figLabel(replaced)}` : `${figLabel(fig)} placed on ${where}`];
+  }
+  /* Put `fig` on the Flipper's slot. When something may still be there, lift it off first and give the
+   * game a moment to see the empty slot (it only notices a new figure that way). */
+  sendLoad(slot, fig, liftFirst) {
+    this.sentAt.set(slot, Date.now());
+    if (liftFirst) {
+      this.send(P.remove(slot)); this.holding.add(slot);
+      setTimeout(() => { this.holding.delete(slot); if (this.placed.get(slot) === fig && this.connected && this.synced) { this.sentAt.set(slot, Date.now()); this.send(P.load(slot, fig.data)); } }, 700);
+    } else this.send(P.load(slot, fig.data));
+  }
+  /* A figure the Flipper never confirmed (a frame lost on the radio) used to stay yellow forever: send it again. */
+  retryUnconfirmed() {
+    if (!this.connected || !this.synced || this.rejected) return;
+    for (const [slot, fig] of this.placed) {
+      if (this.state.get(slot) !== SENDING || this.holding.has(slot)) continue;
+      if (Date.now() - (this.sentAt.get(slot) || 0) < 6000) continue;
+      const n = (this.tries.get(slot) || 0) + 1;
+      if (n > 3) { this.state.set(slot, ERROR); this.onLog(`${figLabel(fig)}: the Flipper did not confirm it after 3 tries. Lift it off and place it again.`); this.changed(); continue; }
+      this.tries.set(slot, n);
+      this.onLog(`${figLabel(fig)}: no confirmation from the Flipper for ${this.slotName(slot)}, sending again (try ${n} of 3)`);
+      this.sendLoad(slot, fig, true);
+    }
+  }
+  placeMany(figs, first = null) {
+    let placed = 0; const notes = [];
+    figs.forEach((fig, i) => {
+      if (notes._stop) return;
+      const slot = i === 0 ? first : null;
+      if (slot === null && this.full) {
+        const left = figs.slice(i).filter((f) => !this.findSame(f)).length;
+        if (left) notes.push(`portal full, ${left} not placed`);
+        notes._stop = true; return;
+      }
+      const [ok, msg] = this.place(fig, slot);
+      if (ok) placed++; else notes.push(msg);
+    });
+    return [placed, notes];
+  }
+  remove(slot) {
+    if (!this.placed.has(slot)) return false;
+    const label = figLabel(this.placed.get(slot)), where = this.slotName(slot);
+    this.drop(slot); this.onLog(`${label} removed from ${where}`); this.changed(); return true;
+  }
+  drop(slot) {
+    this.placed.delete(slot); this.state.delete(slot);
+    if (this.connected && this.synced) this.send(P.remove(slot));
+  }
+  clear() {
+    this.placed.clear(); this.state.clear();
+    if (this.connected && this.synced) this.send(P.clear());
+    this.onLog("Portal cleared"); this.changed();
+  }
+  resetLinkState() { this.flipperSlots = new Set(); this.holding = new Set(); this.sentAt = new Map(); this.tries = new Map(); this.absent = new Map(); this.confirmedAt = new Map(); this.usb = null; this.game = null; this.synced = false; this.rejected = false; this.parser = new Parser(); }
+  setTransport(t) {
+    try { this.transport.disconnect(); } catch (e) {}
+    this.transport = t; this.bind(t);
+    this.link = "disconnected"; this.linkDetail = ""; this.resetLinkState(); this.problem = null;
+    for (const s of this.placed.keys()) this.state.set(s, LOCAL);
+    this.changed();
+  }
+  connect() { return this.transport.connect(); }
+  disconnect() { return this.transport.disconnect(); }
+  pollStatus() { if (this.connected && !this.rejected) { this.retryUnconfirmed(); this.send(this.synced ? P.statusReq() : P.hello()); } }
+  onLinkEvent(state, detail) {
+    this.link = state; this.linkDetail = detail || "";
+    if (state === "connected") {
+      this.onLog(`Connected: ${detail}`); this.problem = null; this.resetLinkState();
+      for (const s of this.placed.keys()) this.state.set(s, SENDING);
+      this.send(P.hello());
+    } else if (state === "disconnected") {
+      this.onLog(detail || "Disconnected"); this.resetLinkState();
+      for (const s of this.placed.keys()) this.state.set(s, LOCAL);
+    } else { this.problem = null; this.onLog(`Connecting to ${detail}...`); }
+    this.changed();
+  }
+  syncAll() {
+    this.send(P.clear());
+    for (const [slot, fig] of [...this.placed].sort((a, b) => a[0] - b[0])) { this.state.set(slot, SENDING); this.send(P.load(slot, fig.data)); }
+  }
+  wrongApp(v) {
+    this.problem = `Wrong Flipper app: it speaks protocol version ${v}${v === 1 ? " (that is the Disney Infinity base)" : ""}, this page needs version ${VERSION}. On the Flipper open Toy Pad Emulator > Skylanders and use the patched toybox_ble build.`;
+    this.rejected = true; this.onLog(this.problem);
+    for (const s of this.placed.keys()) this.state.set(s, LOCAL);
+    this.transport.disconnect();
+  }
+  onFrame(f) {
+    if (this.rejected) return;
+    try {
+      if ([MSG.DUMP_LIST_ITEM, MSG.DUMP_DATA].includes(f.type)) { if (this.onFileFrame) this.onFileFrame(f); return; }
+      if (f.type === MSG.RESULT && f.payload.length >= 3 && [MSG.DUMP_READ, MSG.DUMP_WRITE_END].includes(f.payload[0])) { if (this.onFileFrame) this.onFileFrame(f); return; }
+      if (f.type === MSG.STATUS) {
+        if (f.payload.length && f.payload[0] !== VERSION) return this.wrongApp(f.payload[0]);
+        const st = P.parseStatus(f.payload); this.flipperSlots = new Set(st.present);
+        this.usb = st.usb; this.game = st.game < GAME_NAMES.length ? st.game : null;
+        if (!this.synced) { this.synced = true; this.syncAll(); return; }
+        for (const slot of [...this.placed.keys()]) {
+          const fig = this.placed.get(slot);
+          if (st.present.has(slot)) this.absent.delete(slot);
+          if (this.state.get(slot) === CONFIRMED && !st.present.has(slot) && !this.holding.has(slot)) {
+            /* One reply that misses the figure is not proof it was taken off (the game may be mid-swap,
+             * or the reply was queued earlier): only believe it when it repeats, a few seconds after confirming. */
+            const n = (this.absent.get(slot) || 0) + 1; this.absent.set(slot, n);
+            if (n >= 3 && Date.now() - (this.confirmedAt.get(slot) || 0) > 4000) {
+              this.onLog(`${figLabel(fig)} was removed on the Flipper`); this.placed.delete(slot); this.state.delete(slot); this.absent.delete(slot);
+            }
+          } else if (this.state.get(slot) === SENDING && st.present.has(slot) && !this.holding.has(slot)) { this.state.set(slot, CONFIRMED); this.confirmedAt.set(slot, Date.now()); }
+        }
+      } else if (f.type === MSG.RESULT) {
+        const r = P.parseResult(f.payload);
+        if (r.request === MSG.LOAD && this.placed.has(r.slot)) {
+          if (r.code === 0) { this.state.set(r.slot, CONFIRMED); this.confirmedAt.set(r.slot, Date.now()); this.absent.delete(r.slot); }
+          else { this.state.set(r.slot, ERROR); this.onLog(`Flipper refused ${this.slotName(r.slot)}: ${RESULT_TEXT[r.code] ?? r.code}`); }
+        }
+      } else if (f.type === MSG.SAVE) {
+        const [slot, data] = P.parseSave(f.payload); this.onSaveFrame(slot, data);
+      }
+    } catch (e) { this.onLog(`Bad message from Flipper: ${e.message}`); }
+  }
+  onSaveFrame(slot, data) {
+    this.frames++;
+    const fig = this.placed.get(slot);
+    if (!fig) return this.onLog(`Game progress for empty slot ${slot + 1} ignored`);
+    if (!this.writeBack) return this.onLog(`${figLabel(fig)}: game progress received (write-back is off)`);
+    const u32 = (data[0] | (data[1] << 8) | (data[2] << 16) | (data[3] << 24)) >>> 0, id = data[0x10] | (data[0x11] << 8);
+    if (u32 !== fig.serial || id !== fig.charId) return this.onLog(`Could not save ${figLabel(fig)}: data is for ${slotLabel(this.game, slot)} but it is a different figure (serial ${u32.toString(16)}, id ${id}); not overwriting`);
+    if (this.state.get(slot) !== CONFIRMED) { this.state.set(slot, CONFIRMED); this.confirmedAt.set(slot, Date.now()); }   // the game is writing to it, so the Flipper has it
+    if (data.length === fig.data.length && data.every((b, i) => b === fig.data[i])) return;   // nothing new since the last save
+    if (!fig.backup) fig.backup = fig.data;   // first original kept
+    fig.data = Uint8Array.from(data); this.saves++;
+    this.onLog(`Saved game progress to ${fig.file}`);
+    this.onSave(fig);
+  }
+}
+
+/* ---- transports ---- */
+class FakeFlipper {
+  constructor(game = 1) { this.game = game; this.usb = 2; this.present = new Map(); this.connectedFlag = false; this.parser = new Parser(); this.chunk = 20; }
+  async connect() { this.connectedFlag = true; this.parser = new Parser(); this.onLink("connecting", "demo"); setTimeout(() => this.onLink("connected", "simulated Flipper"), 50); }
+  disconnect() { if (this.connectedFlag) { this.connectedFlag = false; this.onLink("disconnected", "Disconnected"); } }
+  send(data) { if (!this.connectedFlag) return; for (const f of this.parser.feed(data)) this.handle(f); }
+  setGame(g) { this.game = g; if (this.connectedFlag) this.status(); }
+  simulateSave(slot, data) { this.present.set(slot, data); const p = new Uint8Array(1 + data.length); p[0] = slot; p.set(data, 1); this.reply(MSG.SAVE, p); }
+  status() {
+    let mask = 0; for (const s of this.present.keys()) mask |= 1 << s;
+    this.reply(MSG.STATUS, Uint8Array.of(VERSION, this.usb, mask & 0xFF, mask >> 8, this.game));
+  }
+  result(req, slot, code) { this.reply(MSG.RESULT, Uint8Array.of(req, slot, code)); }
+  reply(type, payload) {
+    const raw = encode(type, payload);
+    setTimeout(() => { for (let i = 0; i < raw.length; i += this.chunk) this.onData(raw.slice(i, i + this.chunk)); }, 20);
+  }
+  handle(f) {
+    const slot = f.payload.length ? f.payload[0] : 0;
+    if (f.type === MSG.HELLO || f.type === MSG.STATUS_REQ) this.status();
+    else if (f.type === MSG.LOAD) {
+      if (f.payload.length !== 1 + FIGURE_SIZE) this.result(f.type, slot, 2);
+      else if (slot >= SLOT_COUNT) this.result(f.type, slot, 1);
+      else { this.present.set(slot, f.payload.slice(1)); this.result(f.type, slot, 0); this.status(); }
+    } else if (f.type === MSG.REMOVE) {
+      if (f.payload.length !== 1 || slot >= SLOT_COUNT) this.result(f.type, slot, 1);
+      else if (!this.present.has(slot)) { this.result(f.type, slot, 3); this.status(); }
+      else { this.present.delete(slot); this.result(f.type, slot, 0); this.status(); }
+    } else if (f.type === MSG.CLEAR) { this.present.clear(); this.result(f.type, 0, 0); this.status(); }
+    else this.result(f.type, 0, 4);
+  }
+}
+
+class WebBleTransport {
+  constructor() { this.device = null; this.writeCh = null; this.withResponse = false; this.q = []; this.busy = false; this.chunk = 20; this.alive = false; }
+  static supported() { return typeof navigator !== "undefined" && !!navigator.bluetooth; }
+  async connect() {
+    if (!WebBleTransport.supported()) { this.onLink("disconnected", "This browser has no Web Bluetooth. Use Chrome on Android (iPhone: the free Bluefy browser)."); return; }
+    let stage = "choosing a device";
+    try {
+      this.device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: SERIAL_PROFILES.map((p) => p.service) });
+      this.onLink("connecting", this.device.name || "device");
+      this.device.addEventListener("gattserverdisconnected", () => {
+        const was = this.alive; this.alive = false; this.q = [];
+        this.onLink("disconnected", was ? "Bluetooth connection lost" : "Disconnected");
+      });
+      stage = "opening the Bluetooth connection";
+      const server = await this.device.gatt.connect();
+      stage = "looking for the Flipper serial service";
+      let chars = null;
+      for (const p of SERIAL_PROFILES) {
+        try { const svc = await server.getPrimaryService(p.service); chars = [await svc.getCharacteristic(p.a), await svc.getCharacteristic(p.b)]; break; } catch (e) {}
+      }
+      if (!chars) {
+        this.device.gatt.disconnect();
+        this.onLink("disconnected", "Connected, but this device has no Flipper serial service. On the Flipper open Toy Pad Emulator > Skylanders > your game, then hold Left to turn on the BLE link.");
+        return;
+      }
+      const canNotify = (c) => c.properties.notify || c.properties.indicate;
+      const canWrite = (c) => c.properties.write || c.properties.writeWithoutResponse;
+      const writeCh = chars.find((c) => canWrite(c) && !canNotify(c)) || chars.find(canWrite);
+      const notifyCh = chars.find((c) => c !== writeCh && canNotify(c));
+      if (!writeCh || !notifyCh) throw new Error("serial characteristics do not look right");
+      this.writeCh = writeCh; this.withResponse = !!writeCh.properties.write;
+      stage = "subscribing to Flipper replies (accept the pairing request; the PIN is on the Flipper screen)";
+      notifyCh.addEventListener("characteristicvaluechanged", (e) => { const v = e.target.value; this.onData(new Uint8Array(v.buffer, v.byteOffset, v.byteLength).slice()); });
+      await notifyCh.startNotifications();
+      this.alive = true;
+      this.onLink("connected", `${this.device.name || "Flipper"} (chunk ${this.chunk} bytes)`);
+    } catch (e) {
+      if (e && e.name === "NotFoundError") { this.onLink("disconnected", "No device chosen"); return; }
+      try { this.device && this.device.gatt.connected && this.device.gatt.disconnect(); } catch (x) {}
+      this.onLink("disconnected", `Could not connect while ${stage}: ${e.name}: ${e.message}`);
+    }
+  }
+  disconnect() { this.q = []; if (this.device && this.device.gatt && this.device.gatt.connected) this.device.gatt.disconnect(); }
+  send(data) { this.q.push(data); this.drain(); }
+  async drain() {
+    if (this.busy) return; this.busy = true;
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    try {
+      while (this.q.length && this.alive) {
+        const data = this.q.shift();
+        try {
+          for (let i = 0; i < data.length; i += this.chunk) {
+            const piece = data.slice(i, i + this.chunk);
+            if (this.withResponse) await this.writeCh.writeValueWithResponse(piece);
+            else { await this.writeCh.writeValueWithoutResponse(piece); await sleep(20); }
+          }
+          await sleep(150);
+        } catch (e) { this.onLog(`BLE write failed: ${e.message}`); this.q = []; }
+      }
+    } finally { this.busy = false; }
+  }
+}
+/* ---- figure editor (port of skylander_editor.py): decrypt, edit stats, fix checksums, re-encrypt ---- */
+const md5 = (() => {
+  const K = new Uint32Array(64), SH = [7, 12, 17, 22, 5, 9, 14, 20, 4, 11, 16, 23, 6, 10, 15, 21];
+  for (let i = 0; i < 64; i++) K[i] = Math.floor(Math.abs(Math.sin(i + 1)) * 4294967296) >>> 0;
+  return (bytes) => {
+    const n = bytes.length, len = (((n + 8) >>> 6) + 1) << 6, buf = new Uint8Array(len), dv = new DataView(buf.buffer);
+    buf.set(bytes); buf[n] = 0x80; dv.setUint32(len - 8, (n * 8) >>> 0, true); dv.setUint32(len - 4, Math.floor(n / 536870912), true);
+    let a0 = 0x67452301, b0 = 0xefcdab89, c0 = 0x98badcfe, d0 = 0x10325476;
+    for (let o = 0; o < len; o += 64) {
+      let A = a0, B = b0, C = c0, D = d0;
+      for (let i = 0; i < 64; i++) {
+        let F, g;
+        if (i < 16) { F = (B & C) | (~B & D); g = i; } else if (i < 32) { F = (D & B) | (~D & C); g = (5 * i + 1) % 16; }
+        else if (i < 48) { F = B ^ C ^ D; g = (3 * i + 5) % 16; } else { F = C ^ (B | ~D); g = (7 * i) % 16; }
+        F = (F + A + K[i] + dv.getUint32(o + g * 4, true)) >>> 0; A = D; D = C; C = B;
+        const s = SH[(i >> 4) * 4 + (i & 3)]; B = (B + ((F << s) | (F >>> (32 - s)))) >>> 0;
+      }
+      a0 = (a0 + A) >>> 0; b0 = (b0 + B) >>> 0; c0 = (c0 + C) >>> 0; d0 = (d0 + D) >>> 0;
+    }
+    const out = new Uint8Array(16), ov = new DataView(out.buffer); [a0, b0, c0, d0].forEach((v, i) => ov.setUint32(i * 4, v, true)); return out;
+  };
+})();
+const AES = (() => {
+  const rotl8 = (x, n) => ((x << n) | (x >> (8 - n))) & 0xFF, SBOX = new Array(256).fill(0), INV = new Array(256).fill(0);
+  let p = 1, q = 1;
+  for (;;) {
+    p = (p ^ ((p << 1) & 0xFF) ^ (p & 0x80 ? 0x1B : 0)) & 0xFF;
+    q ^= (q << 1) & 0xFF; q ^= (q << 2) & 0xFF; q ^= (q << 4) & 0xFF; if (q & 0x80) q ^= 0x09;
+    SBOX[p] = q ^ rotl8(q, 1) ^ rotl8(q, 2) ^ rotl8(q, 3) ^ rotl8(q, 4) ^ 0x63;
+    if (p === 1) break;
+  }
+  SBOX[0] = 0x63; SBOX.forEach((v, i) => { INV[v] = i; });
+  const gmul = (a, b) => { let r = 0; while (b) { if (b & 1) r ^= a; a = ((a << 1) ^ (a & 0x80 ? 0x1B : 0)) & 0xFF; b >>= 1; } return r; };
+  const MUL = {}; for (const n of [2, 3, 9, 11, 13, 14]) MUL[n] = Array.from({ length: 256 }, (_, x) => gmul(x, n));
+  const SR = Array.from({ length: 16 }, (_, i) => (i % 4) + 4 * ((((i >> 2) + (i % 4)) % 4))), ISR = Array.from({ length: 16 }, (_, i) => (i % 4) + 4 * ((((i >> 2) - (i % 4)) % 4 + 4) % 4));
+  function keys(key) {
+    const w = []; for (let i = 0; i < 16; i += 4) w.push([key[i], key[i + 1], key[i + 2], key[i + 3]]);
+    let rcon = 1;
+    for (let i = 4; i < 44; i++) {
+      let t = w[i - 1].slice();
+      if (i % 4 === 0) { t = [t[1], t[2], t[3], t[0]].map((b) => SBOX[b]); t[0] ^= rcon; rcon = MUL[2][rcon]; }
+      w.push(w[i - 4].map((a, j) => a ^ t[j]));
+    }
+    return Array.from({ length: 11 }, (_, r) => [].concat(w[4 * r], w[4 * r + 1], w[4 * r + 2], w[4 * r + 3]));
+  }
+  const xor = (a, b) => a.map((x, i) => x ^ b[i]);
+  return {
+    encrypt(key, block) {
+      const rk = keys(key), m2 = MUL[2], m3 = MUL[3]; let s = xor(Array.from(block), rk[0]);
+      for (let r = 1; r < 10; r++) {
+        s = SR.map((j) => SBOX[s[j]]); const out = [];
+        for (let c = 0; c < 16; c += 4) { const [a0, a1, a2, a3] = s.slice(c, c + 4); out.push(m2[a0] ^ m3[a1] ^ a2 ^ a3, a0 ^ m2[a1] ^ m3[a2] ^ a3, a0 ^ a1 ^ m2[a2] ^ m3[a3], m3[a0] ^ a1 ^ a2 ^ m2[a3]); }
+        s = xor(out, rk[r]);
+      }
+      return Uint8Array.from(xor(SR.map((j) => SBOX[s[j]]), rk[10]));
+    },
+    decrypt(key, block) {
+      const rk = keys(key), m9 = MUL[9], m11 = MUL[11], m13 = MUL[13], m14 = MUL[14]; let s = xor(Array.from(block), rk[10]);
+      for (let r = 9; r > 0; r--) {
+        s = xor(ISR.map((j) => INV[s[j]]), rk[r]); const out = [];
+        for (let c = 0; c < 16; c += 4) { const [a0, a1, a2, a3] = s.slice(c, c + 4); out.push(m14[a0] ^ m11[a1] ^ m13[a2] ^ m9[a3], m9[a0] ^ m14[a1] ^ m11[a2] ^ m13[a3], m13[a0] ^ m9[a1] ^ m14[a2] ^ m11[a3], m11[a0] ^ m13[a1] ^ m9[a2] ^ m14[a3]); }
+        s = out;
+      }
+      return Uint8Array.from(xor(ISR.map((j) => INV[s[j]]), rk[0]));
+    },
+  };
+})();
+const AREA_BASE = [0x08, 0x24], PLAIN_BLOCKS = [0x22, 0x3E], R2 = 9, XP_A_MAX = 33000, XP_B_MAX = 63500, XP_MAX = 197500, HAT_MAX = 510;
+const HASH_CONST = Uint8Array.from(" Copyright (C) 2010 Activision. All Rights Reserved. ", (c) => c.charCodeAt(0));
+const LEVEL_XP = [0, 1000, 2200, 3800, 6000, 9000, 13000, 18200, 24800, 33000, 43000, 55000, 69200, 85800, 96500, 113700, 132400, 152600, 174300, 197500];
+const levelForXp = (xp) => { let l = 1; LEVEL_XP.forEach((n, i) => { if (xp >= n) l = i + 1; }); return l; };
+function cryptDump(data, decrypt) {   // every block from 0x08 on except sector trailers and 0x22 / 0x3E; key = MD5(blocks 0+1 | block | constant)
+  const out = Uint8Array.from(data);
+  for (let blk = 8; blk < 64; blk++) {
+    if (blk % 4 === 3 || PLAIN_BLOCKS.includes(blk)) continue;
+    const kin = new Uint8Array(32 + 1 + HASH_CONST.length); kin.set(data.subarray(0, 32)); kin[32] = blk; kin.set(HASH_CONST, 33);
+    out.set(AES[decrypt ? "decrypt" : "encrypt"](md5(kin), data.subarray(blk * 16, blk * 16 + 16)), blk * 16);
+  }
+  return out;
+}
+function crc16(data, crc = 0xFFFF) {
+  for (const b of data) { let n2 = b << 8; for (let i = 0; i < 8; i++) { const top = (crc ^ n2) & 0x8000; crc = ((crc << 1) & 0xFFFF) ^ (top ? 0x1021 : 0); n2 = (n2 << 1) & 0xFFFF; } }
+  return crc;
+}
+const crcType0 = (d) => crc16(d.subarray(0, 0x1E));
+function crcType1(d, area) { const b = AREA_BASE[area] * 16, h = Uint8Array.from(d.subarray(b, b + 16)); h[14] = 5; h[15] = 0; return crc16(h); }
+function crcType23(d, area, kind) {
+  const base = AREA_BASE[area]; let crc = 0xFFFF;
+  for (let r = kind === 2 ? 1 : 5; r < (kind === 2 ? 5 : 9); r++) if (r % 4 !== 3) crc = crc16(d.subarray((base + r) * 16, (base + r + 1) * 16), crc);
+  if (kind === 3) for (let r = 9; r < 28; r++) if (r % 4 !== 3) crc = crc16(new Uint8Array(16), crc);
+  return crc;
+}
+function crcType4(d, area, zeroLast = false) {   // 2nd data region: block 0x11[2:16] + 0x12 + 0x14 + 0x15, CRC16 xor 0xE953
+  const base = AREA_BASE[area] + R2, buf = new Uint8Array(62); buf.set(d.subarray(base * 16 + 2, base * 16 + 16), 0);
+  [1, 3, 4].forEach((r, i) => buf.set(d.subarray((base + r) * 16, (base + r + 1) * 16), 14 + i * 16));
+  if (zeroLast) buf[61] = 0; return crc16(buf) ^ 0xE953;
+}
+const anyBytes = (d, from, to) => { for (let i = from; i < to; i++) if (d[i]) return true; return false; };
+const areaBlank = (d, area) => { const b = AREA_BASE[area]; for (let r = 0; r < 28; r++) if (r % 4 !== 3 && anyBytes(d, (b + r) * 16, (b + r + 1) * 16)) return false; return true; };
+const zeroArea = (buf, area) => { const b = AREA_BASE[area]; for (let r = 0; r < 28; r++) if (r % 4 !== 3) buf.fill(0, (b + r) * 16, (b + r + 1) * 16); };
+const region2Present = (d, area) => { const base = AREA_BASE[area] + R2; return [0, 1, 3, 4].some((r) => anyBytes(d, (base + r) * 16, (base + r + 1) * 16)); };
+const stored16 = (d, blk, off) => d[blk * 16 + off] | (d[blk * 16 + off + 1] << 8);
+function checksumReport(d, z4 = false) {   // "type,area" -> [stored, computed]
+  const rep = { "0,0": [stored16(d, 1, 0x0E), crcType0(d)] };
+  for (const a of [0, 1]) {
+    if (areaBlank(d, a)) continue;
+    const b = AREA_BASE[a];
+    rep[`1,${a}`] = [stored16(d, b, 0x0E), crcType1(d, a)]; rep[`2,${a}`] = [stored16(d, b, 0x0C), crcType23(d, a, 2)]; rep[`3,${a}`] = [stored16(d, b, 0x0A), crcType23(d, a, 3)];
+    if (region2Present(d, a)) rep[`4,${a}`] = [stored16(d, b + R2, 0), crcType4(d, a, z4)];
+  }
+  return rep;
+}
+const validCount = (d) => Object.entries(checksumReport(d)).filter(([k, [s, c]]) => "123".includes(k[0]) && s === c).length;
+
+class FigureDump {   // a dump held decrypted in memory; re-encrypted by toBytes()
+  constructor(plain, encrypted = true) {
+    this.plain = Uint8Array.from(plain); this.encrypted = encrypted; this.blank = false; this.validFound = validCount(this.plain); this.z4 = this.detectZ4();
+  }
+  static fromBytes(raw) {
+    if (raw.length !== FIGURE_SIZE) throw new Error("not a 1024-byte dump");
+    let any = false; for (let b = 8; b < 64 && !any; b++) if (b % 4 !== 3 && anyBytes(raw, b * 16, b * 16 + 16)) any = true;
+    if (!any) { const f = new FigureDump(raw, false); f.blank = true; return f; }
+    const dec = cryptDump(raw, true);
+    if (validCount(raw) > validCount(dec)) return new FigureDump(raw, false);
+    for (const a of [0, 1]) if (areaBlank(raw, a)) zeroArea(dec, a);
+    return new FigureDump(dec, true);
+  }
+  detectZ4() {
+    let best = false;
+    for (const a of [0, 1]) {
+      if (!region2Present(this.plain, a)) continue;
+      const st = stored16(this.plain, AREA_BASE[a] + R2, 0);
+      if (st === crcType4(this.plain, a, false)) return false;
+      if (st === crcType4(this.plain, a, true)) best = true;
+    }
+    return best;
+  }
+  report() { return checksumReport(this.plain, this.z4); }
+  toBytes() {
+    if (!this.encrypted) return Uint8Array.from(this.plain);
+    const out = cryptDump(this.plain, false);
+    for (const a of [0, 1]) if (areaBlank(this.plain, a)) zeroArea(out, a);
+    return out;
+  }
+  seq(a) { return this.plain[AREA_BASE[a] * 16 + 9]; }
+  seq2(a) { return this.plain[(AREA_BASE[a] + R2) * 16 + 2]; }
+  static newer(s0, s1) { return ((s0 - s1) & 0xFF) >= 129 ? 1 : 0; }
+  activeArea() { return FigureDump.newer(this.seq(0), this.seq(1)); }
+  activeArea2() { return FigureDump.newer(this.seq2(0), this.seq2(1)); }
+  hasRegion2() { return region2Present(this.plain, 0) || region2Present(this.plain, 1); }
+  o(rel, off = 0, area = null) { return (AREA_BASE[area === null ? this.activeArea() : area] + rel) * 16 + off; }
+  o2(off, area = null) { return (AREA_BASE[area === null ? this.activeArea2() : area] + R2) * 16 + off; }
+  badChecksums(area = null) {
+    const a = area === null ? this.activeArea() : area, rep = this.report();
+    return [1, 2, 3, 4].filter((t) => rep[`${t},${a}`] && rep[`${t},${a}`][0] !== rep[`${t},${a}`][1]);
+  }
+  fixArea(area) {   // order matters: 2, 3, 4, then 1 (type 1 covers the header that holds 2 and 3)
+    const p = this.plain, b = AREA_BASE[area] * 16;
+    for (const [kind, off] of [[2, 0x0C], [3, 0x0A]]) { const c = crcType23(p, area, kind); p[b + off] = c & 0xFF; p[b + off + 1] = c >> 8; }
+    if (region2Present(p, area)) { const c = crcType4(p, area, this.z4), o = (AREA_BASE[area] + R2) * 16; p[o] = c & 0xFF; p[o + 1] = c >> 8; }
+    const c = crcType1(p, area); p[b + 0x0E] = c & 0xFF; p[b + 0x0F] = c >> 8;
+  }
+  live() { return [0, 1].filter((a) => !areaBlank(this.plain, a)); }
+  fixAll() { for (const a of this.live()) this.fixArea(a); }
+  initRegion2() {
+    for (const a of this.live()) { for (const r of [0, 1, 3, 4]) this.plain.fill(0, (AREA_BASE[a] + R2 + r) * 16, (AREA_BASE[a] + R2 + r + 1) * 16); this.plain[(AREA_BASE[a] + R2) * 16 + 2] = a + 1; }
+  }
+  u16(o) { return this.plain[o] | (this.plain[o + 1] << 8); }
+  put(o, bytes) { this.plain.set(bytes, o); }
+  getGold() { return this.u16(this.o(0, 3)); }
+  getHeroPoints() { return this.u16(this.o(5, 0x0A)); }
+  getSkills() { return this.u16(this.o(1, 0)); }
+  getXp() {
+    let xp = this.u16(this.o(0, 0));
+    if (this.hasRegion2()) { xp += this.u16(this.o2(3)) + this.u16(this.o2(8)); if (this.plain[this.o2(10)] === 1) xp += 65536; }
+    return xp;
+  }
+  getHat() {
+    const h = this.plain[this.o(1, 4)]; if (h) return h;
+    if (this.hasRegion2()) { for (const off of [5, 12]) if (this.plain[this.o2(off)]) return this.plain[this.o2(off)]; if (this.plain[this.o2(14)]) return this.plain[this.o2(14)] + 255; }
+    return 0;
+  }
+  nameBytes() { const a = this.o(2), b = this.o(4), out = new Uint8Array(32); out.set(this.plain.subarray(a, a + 16), 0); out.set(this.plain.subarray(b, b + 16), 16); return out; }
+  getName() { const raw = this.nameBytes(); let s = ""; for (let i = 0; i < 32; i += 2) { const u = raw[i] | (raw[i + 1] << 8); if (!u) break; s += String.fromCharCode(u); } return s; }
+  uid() { return [...this.plain.subarray(0, 4)].map((b) => b.toString(16).padStart(2, "0")).join(" ").toUpperCase(); }
+  apply(xp, gold, heroPoints, name, hat, skills) {   // writes into BOTH areas; only touches fields that changed; returns true if anything changed
+    if (name.length > 14 || [...name].some((c) => c.codePointAt(0) > 0xFFFF)) throw new Error("Nickname must be at most 14 characters (no emoji).");
+    if (!(xp >= 0 && xp <= XP_MAX)) throw new Error(`XP must be between 0 and ${XP_MAX}.`);
+    if (!(hat >= 0 && hat <= HAT_MAX)) throw new Error(`Hat ID must be between 0 and ${HAT_MAX}.`);
+    const enc = new Uint8Array(32); for (let i = 0; i < name.length; i++) { enc[i * 2] = name.charCodeAt(i) & 0xFF; enc[i * 2 + 1] = name.charCodeAt(i) >> 8; }
+    const before = Uint8Array.from(this.plain);
+    if ((xp > XP_A_MAX || hat >= 46) && !this.hasRegion2() && (xp !== this.getXp() || hat !== this.getHat())) this.initRegion2();
+    const cur = this.nameBytes(), chg = { gold: gold !== this.getGold(), hp: heroPoints !== this.getHeroPoints(), skills: skills !== this.getSkills(), name: enc.some((b, i) => b !== cur[i]), xp: xp !== this.getXp(), hat: hat !== this.getHat() };
+    const le = (v) => Uint8Array.of(v & 0xFF, (v >> 8) & 0xFF);
+    for (const a of this.live()) {
+      if (chg.gold) this.put(this.o(0, 3, a), le(gold));
+      if (chg.hp) this.put(this.o(5, 0x0A, a), le(heroPoints));
+      if (chg.skills) this.put(this.o(1, 0, a), le(skills));
+      if (chg.name) { this.put(this.o(2, 0, a), enc.subarray(0, 16)); this.put(this.o(4, 0, a), enc.subarray(16)); }
+    }
+    if (chg.xp) this.setXp(xp);
+    if (chg.hat) this.setHat(hat);
+    return this.plain.some((b, i) => b !== before[i]);
+  }
+  setXp(xp) {
+    let pa, pb = 0, pc = 0, flag = 0;
+    if (xp <= XP_A_MAX) pa = xp; else if (xp <= XP_A_MAX + XP_B_MAX) { pa = XP_A_MAX; pb = xp - XP_A_MAX; }
+    else if (xp <= XP_A_MAX + XP_B_MAX + 65535) { pa = XP_A_MAX; pb = XP_B_MAX; pc = xp - XP_A_MAX - XP_B_MAX; }
+    else { pa = XP_A_MAX; pb = XP_B_MAX; pc = xp - (XP_A_MAX + XP_B_MAX + 65536); flag = 1; }
+    const r2 = this.hasRegion2(), le = (v) => [v & 0xFF, (v >> 8) & 0xFF];
+    for (const a of this.live()) { this.put(this.o(0, 0, a), Uint8Array.from(le(pa))); if (r2) { this.put(this.o2(3, a), Uint8Array.from(le(pb))); this.put(this.o2(8, a), Uint8Array.from([...le(pc), flag])); } }
+  }
+  setHat(hat) {
+    const s = { a: 0, b: 0, c: 0, d: 0 };
+    if (hat < 46) s.a = hat; else if (hat < 97) s.b = hat; else if (hat < 256) s.c = hat; else s.d = hat - 255;
+    const r2 = this.hasRegion2();
+    for (const a of this.live()) { this.put(this.o(1, 4, a), Uint8Array.of(s.a)); if (r2) { this.put(this.o2(5, a), Uint8Array.of(s.b)); this.put(this.o2(12, a), Uint8Array.of(s.c)); this.put(this.o2(14, a), Uint8Array.of(s.d)); } }
+  }
+}
+if (typeof module !== "undefined") module.exports = { crc8, encode, Parser, P, MSG, Session, FakeFlipper, makeFigure, figLabel, slotLabel, autoSlot, SLOT_COUNT, LOCAL, SENDING, CONFIRMED, ERROR, loadNamesCsv, norm, stem, VERSION, FigureDump, md5, cryptDump, levelForXp, LEVEL_XP };
+/* ===== UI ===== */
+const $ = (id) => document.getElementById(id);
+const figs = [];            // library
+const pics = new Map();     // norm(stem) -> {name, url}
+const picPick = new Map();  // charId -> url (set by hand)
+let selected = new Set();   // selected figures (objects)
+let session, demoFlip = null, lastSig = "";
+const tap = { f: null, t: 0 };
+const SVGNS = "http://www.w3.org/2000/svg";
+const PALETTE = ["#3aa0ff", "#33e0a1", "#f2c14e", "#ff6a4d", "#b07cff", "#ff7ac6", "#4dd0e1", "#9ccc65"];
+const STATE_COLOR = { local: "#6b7385", sending: "#f2c14e", confirmed: "#3be8a0", error: "#ff5a4d" };
+
+/* ---- persistence (IndexedDB) ---- */
+let db = null;
+const idb = {
+  open() {
+    return new Promise((res) => {
+      try {
+        const r = indexedDB.open("skyportal", 1);
+        r.onupgradeneeded = () => { r.result.createObjectStore("figs", { keyPath: "file" }); r.result.createObjectStore("pics", { keyPath: "name" }); };
+        r.onsuccess = () => { db = r.result; res(); };
+        r.onerror = () => res();
+      } catch (e) { res(); }
+    });
+  },
+  put(store, val) {   // resolves true only once the browser has really committed the write
+    if (!db) return Promise.resolve(false);
+    return new Promise((res) => {
+      let done = false;
+      const end = (ok, why) => { if (done) return; done = true; if (!ok) log(`Could not write to the browser database (${store}): ${why || "unknown error"}`); res(ok); };
+      try {
+        const tx = db.transaction(store, "readwrite");
+        tx.objectStore(store).put(val);
+        tx.oncomplete = () => end(true);
+        tx.onerror = tx.onabort = () => end(false, tx.error && tx.error.message);
+      } catch (e) { end(false, e.message); }
+    });
+  },
+  del(store, key) { if (!db) return; try { db.transaction(store, "readwrite").objectStore(store).delete(key); } catch (e) {} },
+  all(store) { return new Promise((res) => { if (!db) return res([]); try { const r = db.transaction(store).objectStore(store).getAll(); r.onsuccess = () => res(r.result); r.onerror = () => res([]); } catch (e) { res([]); } }); },
+};
+const favs = new Set((() => { try { return JSON.parse(localStorage.getItem("favs")) || []; } catch (e) { return []; } })());
+const saveFavs = () => { try { localStorage.setItem("favs", JSON.stringify([...favs])); } catch (e) {} };
+function toggleFav(f) { if (favs.has(f.id)) favs.delete(f.id); else favs.add(f.id); saveFavs(); render(true); }
+const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+
+/* ---- helpers ---- */
+function setMsg(text, bad = false) { const m = $("msg"); m.textContent = text; m.className = bad ? "r" : ""; }
+function log(t) { const l = $("log"); l.textContent += (l.textContent ? "\n" : "") + new Date().toLocaleTimeString() + "  " + t; l.scrollTop = l.scrollHeight; }
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+let picRev = 0; const picCache = new Map();
+function picsChanged() { picRev++; picCache.clear(); }
+function cleanName(s) { return s.replace(/_+/g, " ").replace(/([a-z])([A-Z])/g, "$1 $2").replace(/\[[^\]]*\]|\([^)]*\)/g, " ").replace(/^\s*\d+\s*[-.)\]]\s*/, "").replace(/\s+/g, " ").trim(); }
+const titleCase = (s) => s.replace(/(^|[\s-])([a-z])/g, (m, a, b) => a + b.toUpperCase());
+const VARIANT_RE = /\b(legendary|dark|nitro|light ?core|eon'?s elite|metallic|chrome|gold|silver|platinum|jade|series ?\d|minis?|sidekick|trap master|swap force|trap team|super ?chargers?|imaginators?|spyro'?s adventure|skylanders?|figure|trap|vehicle)\b/gi;
+function nameCands(f) {   // names to try for this figure: cleaned file name, known name, name without variant words
+  const out = [], add = (s) => { s = (s || "").replace(/\s+/g, " ").trim(); if (s.length > 1 && !out.some((o) => norm(o) === norm(s))) out.push(s); };
+  const base = cleanName(stem(f.file)); add(base); add(nameFor(f.charId)); add(base.replace(VARIANT_RE, " "));
+  return out;
+}
+function setPic(key, name, blob, auto) {
+  const old = pics.get(key); if (old) { URL.revokeObjectURL(old.url); if (old.name !== name) idb.del("pics", old.name); }
+  pics.set(key, { name, url: URL.createObjectURL(blob), auto: !!auto }); blob.arrayBuffer().then((buf) => idb.put("pics", { name, buf, type: blob.type || "image/jpeg", auto: !!auto })).catch(() => {}); picsChanged();
+}
+const saveFig = (f) => idb.put("figs", { file: f.id, name: f.file, path: f.path, data: f.data.slice(), backup: f.backup ? f.backup.slice() : null });
+function picFor(f) { if (!picCache.has(f.id)) picCache.set(f.id, findPic(f)); return picCache.get(f.id); }
+let loosePics = null, loosePicsRev = -1, noiseTok = new Set(), fuzzyList = [];
+const tokens = (t) => cleanName(t).toLowerCase().split(/[^a-z0-9']+/).filter(Boolean);
+const looseToks = (t) => tokens(cleanName(t).replace(VARIANT_RE, " ")).filter((w) => !noiseTok.has(w)).map(norm).filter(Boolean);
+const looseKey = (t) => norm(tokens(cleanName(t).replace(VARIANT_RE, " ")).filter((w) => !noiseTok.has(w)).join(" "));
+function loosePicMap() {   // cleaned picture names (game / variant / uploader words removed) -> picture
+  if (loosePics && loosePicsRev === picRev) return loosePics;
+  loosePicsRev = picRev; loosePics = new Map(); noiseTok = new Set(); fuzzyList = [];
+  const all = [...pics.values()];
+  if (all.length >= 8) {   // a word that sits in a large share of the picture names (e.g. "Sobersu's") is a tag, not part of a character name
+    const cnt = new Map();
+    for (const p of all) for (const w of new Set(tokens(stem(p.name)))) cnt.set(w, (cnt.get(w) || 0) + 1);
+    for (const [w, c] of cnt) if (c >= 4 && c / all.length >= 0.25) noiseTok.add(w);
+  }
+  for (const p of all) { const k = looseKey(stem(p.name)); if (k) { if (!loosePics.has(k)) loosePics.set(k, p); fuzzyList.push([k, p, new Set(looseToks(stem(p.name)))]); } }
+  return loosePics;
+}
+function editDist(a, b, max) {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i]; let rowMin = i;
+    for (let j = 1; j <= b.length; j++) { const v = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); cur.push(v); if (v < rowMin) rowMin = v; }
+    if (rowMin > max) return max + 1;
+    prev = cur;
+  }
+  return prev[b.length];
+}
+function fuzzyPic(f) {   // closest picture name to this figure's name (typos, missing/extra words, caps, dashes)
+  loosePicMap();
+  let best = null;
+  for (const c of nameCands(f)) {
+    const k = looseKey(c), ft = looseToks(c);
+    if (ft.length && ft.join("").length >= 3) for (const [pk, p, pt] of fuzzyList) {   // every word of the figure's name appears in the picture's name (extra words like "Trap Master" allowed)
+      if (ft.every((w) => pt.has(w))) { const d = 0.5 + (pt.size - ft.length) * 0.1; if (!best || d < best[0]) best = [d, p, 0]; }
+    }
+    if (k.length < 4) continue;
+    for (const [pk, p] of fuzzyList) {
+      if (pk.length < 4) continue;
+      let d = editDist(k, pk, Math.max(1, Math.floor(Math.min(k.length, pk.length) * 0.2)));
+      const lim = Math.max(1, Math.floor(Math.min(k.length, pk.length) * 0.2));
+      if (d > lim) { const sh = Math.min(k.length, pk.length), lo = Math.max(k.length, pk.length); if (sh >= 5 && sh / lo >= 0.6 && (k.includes(pk) || pk.includes(k))) d = lim; else continue; }
+      if (!best || d < best[0] || (d === best[0] && Math.abs(pk.length - k.length) < best[2])) best = [d, p, Math.abs(pk.length - k.length)];
+    }
+  }
+  return best ? best[1].url : null;
+}
+function findPic(f) {
+  const keys = [norm(stem(f.file)), ...nameCands(f).map(norm), String(f.charId)].filter((k, i, a) => k && a.indexOf(k) === i);
+  for (const k of keys) if (pics.has(k)) return pics.get(k).url;
+  for (const k of keys) if (wikiUrls[k]) return wikiUrls[k];
+  if (wikiUrls[f.charId]) return wikiUrls[f.charId];
+  let best = null;   // loose match: a picture whose name sits inside the figure's name (longest wins)
+  for (const [pk, p] of pics) if (pk.length > 3 && keys.some((k) => k.length > 3 && k.includes(pk)) && (!best || pk.length > best[0].length)) best = [pk, p];
+  if (best) return best[1].url;
+  const lm = loosePicMap();
+  for (const c of nameCands(f)) { const k = looseKey(c); if (k && lm.has(k)) return lm.get(k).url; }
+  return fuzzyPic(f);
+}
+const colourFor = (f) => PALETTE[f.charId % PALETTE.length];
+const initials = (n) => (n.match(/[A-Za-z0-9]+/g) || []).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
+
+/* ---- folders (game / type) + wiki ---- */
+const GAME_LIST = ["Spyro's Adventure", "Giants", "Swap Force", "Trap Team", "SuperChargers", "Imaginators"];
+const KIND_LIST = ["Figure", "Trap Master", "Lightcore", "Eon's Elite", "Mini", "Sidekick", "Trap", "Vehicle", "Item", "Creation Crystal"];
+const WIKI_DEFAULT = "https://skylanders.fandom.com";
+const meta = lsGet("meta", {}), wikiUrls = lsGet("wikiUrls", {}); let metaRev = 0;   // meta: charId -> {game, kind, src}
+const ROOT_RE = /^(skybase|sky base|apps? data|flipper( sd)?|sd ?card|storage|dumps?|library)$/;
+const GAME_RES = [/spyro'?s? ?adventure/, /\bgiants\b/, /swap ?force/, /trap ?team/, /super ?chargers?/, /imaginators?/];   // same order as GAME_LIST
+const FIGURE_RE = /\b(figures?|characters?|skylanders|swappable|swap|lightcores?|legendar(?:y|ies)|core|series|swappers?|unreleased|template|special|trappable|instant|premade|printed|minis?|masters?|elite|variants?|new|returning|senseis?|villains?|sidekicks?|chase|in game|eon)\b/;
+const flat = (t) => " " + t.toLowerCase().replace(/[_.\-]+/g, " ").replace(/\s+/g, " ") + " ";   // folder_names / file-names -> plain words
+function gameFromText(t) { t = flat(t); if (/\beon[’']?s? elite\b/.test(t) && !GAME_RES.some((re) => re.test(t))) return "Trap Team"; const i = GAME_RES.findIndex((re) => re.test(t)); return i < 0 ? null : GAME_LIST[i]; }   // earliest game = debut game
+function kindFromText(raw) {
+  const t = flat(raw);
+  if (/\bcrystals?\b|\bcreation\b/.test(t)) return "Creation Crystal";
+  if (/\bvehicles?\b|\bracing\b/.test(t)) return "Vehicle";
+  if (/\btrap masters?\b/.test(t)) return "Trap Master";
+  if (/\btraps?\b/.test(t.replace(/trap team/g, " "))) return "Trap";
+  if (/\bitems?\b|\badventure packs?\b|\blevel packs?\b|\bbattle packs?\b|\blocations?\b|\bhats?\b|\btrophies\b|\bmagic items?\b|\bexpansions?\b/.test(t)) return "Item";
+  return FIGURE_RE.test(t) ? "Figure" : null;
+}
+function kindStrong(raw) {   // a folder name that clearly says what is inside (vehicles, traps, items, crystals)
+  const t = flat(raw);
+  if (/\btrap masters?\b/.test(t)) return "Trap Master";
+  if (/\beon[’']?s? elite\b/.test(t)) return "Eon's Elite";
+  if (/\blight ?cores?\b/.test(t)) return "Lightcore";
+  if (/\bminis?\b/.test(t)) return "Mini";
+  if (/\bsidekicks?\b/.test(t)) return "Sidekick";
+  if (/\bvehicles?\b|\bracing\b|\bsuperchargers? vehicles?\b/.test(t)) return "Vehicle";
+  if (/\btraps?\b/.test(t.replace(/trap team/g, " "))) return "Trap";
+  if (/\bcreation\b|\bcrystals?\b/.test(t)) return "Creation Crystal";
+  if (/\bitems?\b|\badventure packs?\b|\blevel packs?\b|\bbattle packs?\b|\bexpansion packs?\b|\bchests?\b|\bpromotional\b|\bbattle arena\b|\blocations?\b|\bhats?\b|\btrophies\b/.test(t)) return "Item";
+  return null;
+}
+const guess = (text) => ({ game: gameFromText(text), kind: kindFromText(text) });
+function saveMeta() { lsSet("meta", meta); metaRev++; }
+const fiCache = new Map();
+function folderInfo(path) {   // skybase/trap_team/4. Trap Team/7) Traps/x.sky -> game Trap Team, folder "Traps", type Trap
+  if (fiCache.has(path)) return fiCache.get(path);
+  const lab = (s) => s.replace(/_+/g, " ").replace(/^\s*\d+\s*[.)\-:]\s*/, "").trim(), num = (s) => { const m = s.match(/^\s*(?:skylanders\s+)?(\d+(?:\.\d+)?)\s*[.)\-:\s]/i); return m ? parseFloat(m[1]) : null; };
+  const rows = path.split("/").slice(0, -1).map((s) => ({ s, g: gameFromText(lab(s)), n: num(s), root: ROOT_RE.test(flat(lab(s)).trim()) }));
+  let gi = -1;   // numbered game folder ("4. Trap Team" = debut game) beats the plain one ("trap_team" = just what it works with)
+  rows.forEach((r, i) => { if (r.g && (gi < 0 || (r.n !== null && rows[gi].n === null))) gi = i; });   // first numbered game folder wins; later ones ("1) Giants", "From Giants") are just folders
+  const free = rows.filter((r, i) => i !== gi && !r.root && (!r.g || i > gi)), after = gi >= 0 ? free.filter((r) => rows.indexOf(r) > gi) : free, pool = after.length ? after : free;
+  const c = gi >= 0 ? pool[0] : pool[pool.length - 1];
+  let cat = c ? lab(c.s) : null; if (cat && !/[A-Z]/.test(cat)) cat = titleCase(cat);
+  const info = { game: gi >= 0 ? rows[gi].g : null, gameSure: gi >= 0 && rows[gi].n !== null, kind: null, cat, catOrder: c && c.n !== null ? c.n : 999, sub: pool.filter((r) => r !== c).map((r) => lab(r.s)).join(" / ") };
+  for (const r of pool) { if (r.n === null && r !== c) continue; const k = kindStrong(lab(r.s)); if (k) { info.kind = k; break; } }   // only numbered folders count: un-numbered ones are figure names ("Trap Shadow")   // clear words anywhere in the path first (outer folder wins)
+  if (!info.kind) for (const r of pool) { const k = kindFromText(lab(r.s)); if (k) { info.kind = k; break; } }
+  if (!info.kind && pool.length && pool.every((r) => r.g || !kindFromText(lab(r.s)) ) && pool.some((r) => r.g)) info.kind = "Figure";   // a folder named after the game itself ("1) Giants", "1) SuperChargers") holds that game's figures
+  fiCache.set(path, info); return info;
+}
+const folderScore = (p) => { const i = folderInfo(p || ""); return (i.gameSure ? 3 : 0) + (i.game ? 2 : 0) + (i.cat ? 1 : 0); };
+function builtin(id) {   // only the ID ranges I am sure of
+  if (id >= 0 && id <= 32) return { game: GAME_LIST[0], kind: "Figure" };
+  if (id >= 100 && id <= 115) return { game: GAME_LIST[1], kind: "Figure" };
+  return {};
+}
+function metaFor(f) {   // priority: your manual choice > folder names > known ID ranges > wiki > file name
+  if (f._m && f._r === metaRev) return f._m;
+  const m = meta[f.charId] || {}, man = m.src === "manual" ? m : {}, wk = m.src === "wiki" ? m : {}, fi = folderInfo(f.path || ""), b = builtin(f.charId), g = guess(figLabel(f) + " " + f.file);
+  f._r = metaRev;
+  return (f._m = { game: man.game || (fi.gameSure && fi.game) || b.game || fi.game || wk.game || g.game || null, kind: man.kind || fi.kind || b.kind || wk.kind || g.kind || null, cat: fi.cat, catOrder: fi.catOrder, sub: fi.sub });
+}
+function metaDialog(f) {
+  const d = $("dlg"), m = metaFor(f), opt = (arr, cur) => `<option value="">(unknown)</option>` + arr.map((x) => `<option${x === cur ? " selected" : ""}>${x}</option>`).join("");
+  d.innerHTML = `<h3></h3><select id="mG">${opt(GAME_LIST, m.game)}</select><div style="height:6px"></div><select id="mK">${opt(KIND_LIST, m.kind)}</select><p class="hint">Applies to every figure with character ID ${f.charId}.</p>`;
+  d.firstChild.textContent = figLabel(f);
+  const b = (label, fn, cls) => { const x = document.createElement("button"); x.textContent = label; if (cls) x.className = cls; x.onclick = () => { d.close(); fn(); }; d.appendChild(x); };
+  b("Save", () => { meta[f.charId] = { game: $("mG").value || null, kind: $("mK").value || null, src: "manual" }; saveMeta(); render(true); }, "primary");
+  b("Reset to automatic", () => { delete meta[f.charId]; saveMeta(); render(true); });
+  b("Cancel", () => {});
+  d.showModal();
+}
+async function wikiQuery(base, params) {
+  const r = await fetch(base + "/api.php?" + new URLSearchParams({ action: "query", format: "json", origin: "*", ...params }));
+  if (!r.ok) throw new Error("wiki answered HTTP " + r.status);
+  return r.json();
+}
+const WIKI_PROPS = { prop: "pageimages|categories", piprop: "thumbnail", pithumbsize: 300, cllimit: 500, redirects: 1 };
+function pagesFor(j, asked) {   // asked title -> page, following normalisation and redirects
+  const q = j.query || {}, by = new Map(Object.values(q.pages || {}).map((p) => [p.title, p])), out = new Map();
+  for (let t of asked) { const t0 = t; for (const l of [q.normalized, q.redirects]) for (const x of l || []) if (x.from === t) t = x.to; const p = by.get(t); if (p && p.pageid) out.set(t0, p); }
+  return out;
+}
+async function wikiSearch(base, name) {
+  const j = await wikiQuery(base, { ...WIKI_PROPS, pilimit: 5, generator: "search", gsrsearch: name, gsrnamespace: 0, gsrlimit: 5 }), want = norm(name);
+  const ps = Object.values((j.query && j.query.pages) || {}).sort((a, b) => a.index - b.index);
+  return ps.find((p) => norm(p.title) === want) || ps.find((p) => { const t = norm(p.title); return t.length > 3 && (t.includes(want) || want.includes(t)); }) || null;
+}
+const PIC_JUNK = /icon|logo|wordmark|banner|flag|element|button|badge|wiki\.|sprite|placeholder|commons|edit|arrow|star|coin|stat|ability|upgrade|path|gear|card|noimage|no[ _-]?image|image[ _-]?needed|site-?(logo|wordmark)/i;
+async function wikiPicUrls(base, p, name) {   // like the editor: skip icons/placeholders, prefer files named after the character, try several
+  const want = norm(name), fileOf = (u) => { try { const m = decodeURIComponent(u || "").match(/\/images\/(?:thumb\/)?[0-9a-f]\/[0-9a-f]{2}\/([^\/?]+)/i); return m ? m[1] : ""; } catch (e) { return ""; } };
+  const junk = (fn) => PIC_JUNK.test(fn) && !norm(fn).includes(want);
+  const t = p.thumbnail && p.thumbnail.source, tf = fileOf(t), out = [];
+  if (t && tf && !junk(tf) && norm(tf).includes(want)) out.push(t);   // the page picture is clearly this character's own
+  try {
+    const j = await wikiQuery(base, { prop: "images", titles: p.title, imlimit: 50, redirects: 1 }), pg = Object.values((j.query && j.query.pages) || {})[0];
+    const files = ((pg && pg.images) || []).map((x) => x.title.replace(/^[^:]+:/, "")).filter((f) => IMAGE_RE.test(f) && !junk(f)).sort((a, b) => norm(b).includes(want) - norm(a).includes(want));
+    for (const f of files.slice(0, 3)) {
+      const ij = await wikiQuery(base, { prop: "imageinfo", titles: "File:" + f, iiprop: "url", iiurlwidth: 300 });
+      for (const q of Object.values((ij.query && ij.query.pages) || {})) for (const ii of q.imageinfo || []) for (const u of [ii.thumburl, ii.url]) if (u && !out.includes(u)) out.push(u);
+    }
+  } catch (e) { log("wiki: image list failed for " + p.title + " (" + e.message + ")"); }
+  if (t && !out.includes(t) && !(tf && junk(tf))) out.push(t);   // last resort: the page's own picture
+  return out;
+}
+async function wikiRun(base, onlyNew, withInfo, prog, stopped, only) {
+  let lastErr = "", connected = false;
+  for (const cand of [...new Set([base, base + "/w", WIKI_DEFAULT])]) {   // typed address, its /w variant, then the built-in wiki
+    try { const j = await wikiQuery(cand, { meta: "siteinfo" }); log("wiki: connected to " + j.query.general.sitename); if (cand !== base) prog(`“${base}” is not a wiki, using ${cand}`); base = cand; connected = true; break; }
+    catch (e) { lastErr = e.message; log(`wiki: cannot use ${cand} (${e.message})`); }
+  }
+  if (!connected) { prog(`Cannot reach the wiki: ${lastErr}`); return [0, 1, lastErr]; }
+  lsSet("wikiBase", base);
+  const seen = new Set(), todo = (only || figs).filter((f) => { const k = norm(nameCands(f)[0] || ""); if (!k || seen.has(k)) return false; seen.add(k); return !onlyNew || !picFor(f); });
+  const pages = new Map(), titles = [...new Set(todo.flatMap((f) => nameCands(f).map(titleCase)))];
+  for (let i = 0; i < titles.length && !stopped(); i += 20) {   // step 1: exact titles, 20 per request
+    prog(`Looking up titles ${Math.min(i + 20, titles.length)}/${titles.length}`);
+    const chunk = titles.slice(i, i + 20);
+    try { for (const [t, p] of pagesFor(await wikiQuery(base, { ...WIKI_PROPS, pilimit: 50, titles: chunk.join("|") }), chunk)) pages.set(t, p); } catch (e) { log("wiki: " + e.message); }
+  }
+  let ok = 0, miss = 0, linked = 0, n = 0;
+  for (const f of todo) {
+    if (stopped()) break;
+    prog(`${++n}/${todo.length}: ${figLabel(f)}`);
+    const cands = nameCands(f); let hit = null;
+    for (const c of cands) { const p = pages.get(titleCase(c)); if (p && p.thumbnail) { hit = [c, p]; break; } }
+    if (!hit) for (const c of cands.slice(0, 2)) {   // step 2: wiki search
+      try { const p = await wikiSearch(base, c); if (p) { hit = [c, p]; if (p.thumbnail) break; } } catch (e) { log("wiki: " + e.message); }
+      await new Promise((r) => setTimeout(r, 120));
+    }
+    if (!hit) { miss++; log("wiki: no page for " + cands.join(" / ")); continue; }
+    const [c, p] = hit;
+    if (withInfo && (meta[f.charId] || {}).src !== "manual") { const g = guess((p.categories || []).map((x) => x.title).join(" | ")); if (g.game || g.kind) meta[f.charId] = { ...g, src: "wiki" }; }
+    const urls = await wikiPicUrls(base, p, c);
+    if (!urls.length) { miss++; log(`wiki: page "${p.title}" has no usable picture`); continue; }
+    let saved = false;
+    for (const src of urls.slice(0, 5)) {
+      try { const r = await fetch(src); if (!r.ok) throw 0; const b = await r.blob(); if (!/^image\//.test(b.type)) throw 0; setPic(norm(c), c + (b.type.includes("png") ? ".png" : b.type.includes("webp") ? ".webp" : ".jpg"), b, true); log(`wiki: ${c} <- ${src.split("?")[0].split("/").slice(-4).join("/")}`); saved = true; break; }
+      catch (e) { /* try the next candidate */ }
+    }
+    if (!saved) { wikiUrls[norm(c)] = urls[0]; lsSet("wikiUrls", wikiUrls); linked++; picsChanged(); }   // could not save a copy: keep the link
+    ok++; if (n % 10 === 0) render(true);
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  if (linked) log(`wiki: ${linked} pictures kept as links (copy blocked); they need internet to show`);
+  saveMeta(); render(true); return [ok, miss];
+}
+function wikiDialog() {
+  const d = $("dlg"); let stop = false, running = false;
+  d.innerHTML = `<h3>Pictures &amp; info from the wiki</h3><input id="wBase" type="search"><label class="chk"><input type="checkbox" id="wNew" checked> Only figures without a picture</label><label class="chk"><input type="checkbox" id="wInfo" checked> Also fill in game and type</label><p class="hint" id="wProg">Looks each figure up by name. Needs internet. Your dumps are never uploaded.</p>`;
+  $("wBase").value = lsGet("wikiBase", WIKI_DEFAULT);
+  const go = document.createElement("button"); go.className = "primary"; go.textContent = "Start";
+  go.onclick = async () => {
+    if (running) return; running = true; stop = false; go.disabled = true;
+    const [ok, miss, err] = await wikiRun($("wBase").value.trim().replace(/\/+$/, "") || WIKI_DEFAULT, $("wNew").checked, $("wInfo").checked, (t) => { $("wProg").textContent = t; }, () => stop);
+    $("wBase").value = lsGet("wikiBase", WIKI_DEFAULT);
+    $("wProg").textContent = err ? `Could not reach the wiki (${err}). Check your connection.` : `Done: ${ok} found, ${miss} not found.`; running = false; go.disabled = false;
+  };
+  const x = document.createElement("button"); x.textContent = "Close"; x.onclick = () => { stop = true; d.close(); };
+  const rst = document.createElement("button"); rst.textContent = "Reset address"; rst.onclick = () => { $("wBase").value = WIKI_DEFAULT; lsSet("wikiBase", WIKI_DEFAULT); };
+  d.append(go, rst, x); d.onclose = () => { stop = true; }; d.showModal();
+}
+
+/* ---- ingest ---- */
+async function ingest(fileList, forceGame) {
+  let nb = 0, np = 0, dup = 0, kept = 0, skipped = [];
+  for (const file of fileList) {
+    const name = file.name; if (/^(unsent_slot\d*|session|debug|favorites)\./i.test(name)) continue; let rel = file.webkitRelativePath || "";
+    if (forceGame) { const gi = GAME_LIST.indexOf(forceGame); rel = `${gi + 1}. ${forceGame}/` + rel; }   // folder picked for one game: that game wins, its subfolders become categories
+    if (IMAGE_RE.test(name)) {
+      const k = norm(stem(name)), cur = pics.get(k);
+      if (k && file.size === 0) skipped.push(`${name} is empty (not downloaded?)`); else if (k && (!cur || cur.auto)) { setPic(k, name, file); np++; }
+    } else if (BIN_RE.test(name) || file.size === FIGURE_SIZE) {
+      try {
+        const fig = makeFigure(name, new Uint8Array(await file.arrayBuffer()), rel);   // rel = e.g. skybase/trap_team/4. Trap Team/7) Traps/x.sky
+        const i = figs.findIndex((f) => f.id === fig.id);
+        if (i >= 0) { if (figs[i].backup) { kept++; continue; } figs.splice(i, 1); }   // never overwrite a figure that has saved game progress
+        else {
+          const same = figs.find((f) => f.serial === fig.serial && f.charId === fig.charId && f.variant === fig.variant);
+          if (same) { if (folderScore(fig.path) > folderScore(same.path)) { same.path = fig.path; saveFig(same); } dup++; continue; }
+        }
+        figs.push(fig); saveFig(fig); nb++;
+      } catch (e) { skipped.push(e.message); }
+    }
+  }
+  figs.sort((a, b) => figLabel(a).localeCompare(figLabel(b)));
+  saveMeta();
+  setMsg(`Added ${nb} figure${nb === 1 ? "" : "s"}` + (np ? `, ${np} picture${np === 1 ? "" : "s"}` : "") + (dup ? `; ${dup} duplicate${dup === 1 ? "" : "s"} merged` : "") + (kept ? `; ${kept} already in the library with saved game progress, so kept as they are (use “Reset to original” on a figure first to replace it)` : "") + (skipped.length ? `; skipped ${skipped.length} (${skipped[0]})` : ""), !nb && !np && !dup && skipped.length > 0);
+  skipped.forEach(log); render(true);
+}
+
+/* ---- portal drawing ---- */
+function geometry() {
+  const tall = window.innerWidth < window.innerHeight * 0.9;
+  if (!tall) {
+    const c = { 0: [215, 190], 1: [375, 190], 2: [215, 410], 3: [375, 410], 4: [625, 190], 5: [785, 190], 6: [625, 410], 7: [785, 410] };
+    return { w: 1000, h: 600, r: 75, c, labels: [[295, 60, 1], [705, 60, 2]] };
+  }
+  const c = { 0: [160, 150], 1: [440, 150], 2: [160, 370], 3: [440, 370], 4: [160, 650], 5: [440, 650], 6: [160, 870], 7: [440, 870] };
+  return { w: 600, h: 1000, r: 112, c, labels: [[300, 36, 1], [300, 536, 2]] };
+}
+function draw() {
+  const g = geometry(), svg = $("svg"), s = session;
+  svg.setAttribute("viewBox", `0 0 ${g.w} ${g.h}`);
+  svg.innerHTML = "";
+  const el = (tag, attrs = {}, parent = svg) => { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; };
+  const defs = el("defs");
+  for (const [x, y, p] of g.labels) { const t = el("text", { x, y, class: "pl", fill: p === 1 ? "var(--p1)" : "var(--p2)" }); t.textContent = `PLAYER ${p}`; }
+  for (let slot = 0; slot < SLOT_COUNT; slot++) {
+    const [cx, cy] = g.c[slot], r = g.r, glow = slot < 4 ? "#3aa0ff" : "#ff6a4d", fig = s.placed.get(slot);
+    const grp = el("g", { class: "slot" + (selected.size && !fig ? " target" : "") });
+    grp.addEventListener("click", () => slotTap(slot));
+    el("circle", { cx, cy, r: r + 10, fill: "none", stroke: glow, "stroke-opacity": fig ? 0.55 : 0.18, "stroke-width": 8 }, grp);
+    el("circle", { cx, cy, r, class: "ring" }, grp);
+    if (fig) {
+      el("circle", { cx, cy, r: r - 4, fill: colourFor(fig) }, grp);
+      const t = el("text", { x: cx, y: cy, class: "ini" }, grp); t.textContent = initials(figLabel(fig));
+      const url = picFor(fig);
+      if (url) {
+        const cp = el("clipPath", { id: "cp" + slot }, defs); el("circle", { cx, cy, r: r - 4 }, cp);
+        const im = el("image", { href: url, x: cx - r, y: cy - r, width: r * 2, height: r * 2, preserveAspectRatio: "xMidYMin slice", "clip-path": `url(#cp${slot})`, referrerpolicy: "no-referrer" }, grp);
+        im.addEventListener("error", () => im.remove());
+      }
+      const n = el("text", { x: cx, y: cy + r - 12, class: "nm" }, grp); n.textContent = figLabel(fig).slice(0, 14);
+      el("circle", { cx: cx + r * 0.72, cy: cy - r * 0.72, r: 13, fill: STATE_COLOR[s.state.get(slot)] || "#6b7385", stroke: "#0e1015", "stroke-width": 4 }, grp);
+    }
+    const lb = el("text", { x: cx, y: cy + r + 30, class: "sl" }, grp); lb.textContent = s.slotName(slot);
+  }
+}
+
+/* ---- list ---- */
+function visibleFigs() {
+  const q = norm($("q").value), f = $("filter").value, gF = $("gameF").value, kF = $("kindF").value, cF = $("catF").value;
+  const hit = (v, want) => !want || (want === "?" ? !v : v === want);
+  return figs.filter((x) => { const m = metaFor(x); return (!q || norm(figLabel(x) + stem(x.file) + (m.game || "") + (m.kind || "") + (m.cat || "") + (m.sub || "")).includes(q)) && (f === "All" || (f === "Favorites" ? favs.has(x.id) : (f === "On portal") === (session.slotOf(x) !== null))) && hit(m.game, gF) && hit(m.kind, kF) && hit(m.cat, cF); });
+}
+function refreshCats() {   // folder dropdown is built from the folder names found in the library
+  const sel = $("catF"), gF = $("gameF").value, cur = sel.value, seen = new Map(); let none = false;
+  for (const f of figs) { const m = metaFor(f); if (gF && (gF === "?" ? m.game : m.game !== gF)) continue; if (!m.cat) { none = true; continue; } const e = seen.get(m.cat) || { n: 0, o: m.catOrder }; e.n++; seen.set(m.cat, e); }
+  const html = `<option value="">All folders</option>` + [...seen].sort((a, b) => a[1].o - b[1].o || a[0].localeCompare(b[0])).map(([c, e]) => `<option value="${esc(c)}">${esc(c)} (${e.n})</option>`).join("") + (none ? `<option value="?">No folder</option>` : "");
+  if (sel.dataset.h !== html) { sel.dataset.h = html; sel.innerHTML = html; sel.value = cur; if (sel.value !== cur) sel.value = ""; }
+}
+function renderList() {
+  const list = $("list"); list.innerHTML = "";
+  const v = visibleFigs();
+  if (!figs.length) { list.innerHTML = '<p class="hint">No figures yet. Tap “Add dumps…” and choose your .bin / .sky / .dump files.</p>'; return; }
+  const gb = $("groupBy").value, gi = (a, x) => { const i = a.indexOf(x); return i < 0 ? 99 : i; }, counts = {};
+  const gkey = (f) => { const m = metaFor(f); return gb === "game" ? m.game || "Unsorted" : gb === "kind" ? m.kind || "Unsorted" : gb === "cat" ? m.cat || "No folder" : (m.game || "Unsorted") + " › " + (m.cat || "No folder"); };
+  const ord = (f) => { const m = metaFor(f); return gb === "game" ? gi(GAME_LIST, m.game) : gb === "kind" ? gi(KIND_LIST, m.kind) : gb === "cat" ? m.catOrder : gi(GAME_LIST, m.game) * 1000 + m.catOrder; };
+  if (gb) { v.sort((a, b) => ord(a) - ord(b) || gkey(a).localeCompare(gkey(b)) || figLabel(a).localeCompare(figLabel(b))); v.forEach((f) => { counts[gkey(f)] = (counts[gkey(f)] || 0) + 1; }); }
+  let last = null;
+  for (const f of v) {
+    if (gb && gkey(f) !== last) { last = gkey(f); const h = document.createElement("div"); h.className = "gh"; h.textContent = `${last} · ${counts[last]}`; list.appendChild(h); }
+    const slot = session.slotOf(f), row = document.createElement("div");
+    row.className = "row" + (selected.has(f) ? " sel" : "") + (slot !== null ? " onp" : "");
+    const th = document.createElement("div"); th.className = "thumb"; th.style.background = colourFor(f); th.textContent = initials(figLabel(f));
+    const url = picFor(f);
+    if (url) { const im = new Image(); im.alt = ""; im.referrerPolicy = "no-referrer"; im.onerror = () => im.remove(); im.onload = () => { if (!im.naturalWidth) im.remove(); }; im.src = url; th.appendChild(im); }
+    const t = document.createElement("div"); t.className = "t";
+    t.innerHTML = `<div></div><small></small>`;
+    t.firstChild.textContent = figLabel(f);
+    const m = metaFor(f);
+    t.lastChild.textContent = (slot !== null ? "on " + session.slotName(slot) : `ID ${f.charId}`) + (m.game || m.kind ? ` · ${[m.game, m.kind, m.cat].filter(Boolean).join(" / ")}` : "") + ` · ${f.file}` + (f.backup ? " · progress saved" : "");
+    const more = document.createElement("button"); more.className = "more"; more.textContent = "⋮";
+    more.onclick = (e) => { e.stopPropagation(); figMenu(f); };
+    const star = document.createElement("button"); star.className = "fav" + (favs.has(f.id) ? " on" : ""); star.textContent = favs.has(f.id) ? "★" : "☆"; star.title = "Favorite";
+    star.onclick = (e) => { e.stopPropagation(); toggleFav(f); };
+    row.append(th, t, star, more);
+    row.onclick = () => {
+      const now = Date.now();
+      if (tap.f === f && now - tap.t < 400) { selected.clear(); tap.f = null; placeFigs([f], null); return; }
+      tap.f = f; tap.t = now;
+      if (selected.has(f)) selected.delete(f); else selected.add(f);
+      render(true);
+    };
+    list.appendChild(row);
+  }
+}
+
+/* ---- actions ---- */
+function placeFigs(list, slot) {
+  if (!list.length) return;
+  if (list.length === 1) { const [ok, m] = session.place(list[0], slot); setMsg(m, !ok); }
+  else { const [n, notes] = session.placeMany(list, slot); setMsg(`${n} placed` + (notes.length ? "; " + notes.join("; ") : ""), n === 0); }
+  selected.clear(); render(true);
+}
+function slotTap(slot) {
+  const fig = session.placed.get(slot);
+  if (selected.size) { placeFigs([...selected], slot); return; }
+  if (fig) { session.remove(slot); setMsg(`${figLabel(fig)} lifted off`); render(true); }
+}
+function missingPicsDialog() {
+  const d = $("dlg"); d.innerHTML = "";
+  const miss = figs.filter((f) => !findPic(f)), h = document.createElement("h3");
+  h.textContent = miss.length ? `${miss.length} of ${figs.length} figures have no picture` : "Every figure has a picture"; d.appendChild(h);
+  const info = document.createElement("p"); info.className = "hint";
+  info.textContent = `${pics.size} picture${pics.size === 1 ? "" : "s"} loaded. If a picture is in your folder but not loaded, make sure it is fully downloaded on the device (iCloud files with a download arrow are skipped), then add it again with “Picture folder…”.`; d.appendChild(info);
+  if (miss.length) { const pre = document.createElement("pre"); pre.style.cssText = "max-height:45vh;overflow:auto;white-space:pre-wrap;font-size:13px"; pre.textContent = miss.map((f) => figLabel(f) + "  —  " + (metaFor(f).game || "?")).join("\n"); d.appendChild(pre); }
+  const prog = document.createElement("p"); prog.className = "hint"; d.appendChild(prog);
+  const row = document.createElement("div"); row.className = "dlgrow"; d.appendChild(row);
+  let stop = false;
+  if (miss.length) { const g = document.createElement("button"); g.textContent = "Fetch these from the wiki"; g.onclick = async () => {
+      g.disabled = true; stop = false;
+      const [ok, bad] = await wikiRun(lsGet("wikiBase", WIKI_DEFAULT), true, false, (t) => { prog.textContent = t; }, () => stop, miss);
+      prog.textContent = `Done: ${ok} found, ${bad} not found.` + (!ok && bad ? " Check your connection (the wiki needs internet)." : ""); g.disabled = false; render(true);
+    }; row.appendChild(g); }
+  const b = document.createElement("button"); b.textContent = "Close"; b.onclick = () => { stop = true; d.close(); }; row.appendChild(b); d.showModal();
+}
+function clearAllDialog() {
+  const d = $("dlg"); d.innerHTML = ""; const n = figs.length;
+  const h = document.createElement("h3"); h.textContent = "Are you sure?"; d.appendChild(h);
+  const p = document.createElement("p"); p.className = "hint";
+  p.textContent = n ? `This removes all ${n} figure dump${n === 1 ? "" : "s"} from the library and takes them off the portal. It cannot be undone. Your pictures are kept.` : "There are no figure dumps to remove."; d.appendChild(p);
+  const add = (label, fn, cls) => { const b = document.createElement("button"); b.textContent = label; if (cls) b.className = cls; b.onclick = () => { d.close(); fn(); }; d.appendChild(b); };
+  if (n) add("Yes, remove all", () => {
+    for (const f of [...figs]) { const sl = session.slotOf(f); if (sl !== null) session.remove(sl); idb.del("figs", f.id); }
+    figs.length = 0; selected.clear(); favs.clear(); saveFavs(); setMsg(`Removed ${n} figure${n === 1 ? "" : "s"}`); render(true);
+  }, "danger");
+  add(n ? "Cancel" : "Close", () => {});
+  d.showModal();
+}
+function figMenu(f) {
+  const d = $("dlg"); d.innerHTML = ""; const h = document.createElement("h3"); h.textContent = figLabel(f); d.appendChild(h);
+  const add = (label, fn, cls) => { const b = document.createElement("button"); b.textContent = label; if (cls) b.className = cls; b.onclick = () => { d.close(); fn(); }; d.appendChild(b); };
+  add("Place on next free slot", () => placeFigs([f], null));
+  add(favs.has(f.id) ? "Remove from favorites" : "Add to favorites", () => toggleFav(f));
+  add("Edit stats (XP, gold, name…)", () => editDialog(f));
+  add("Set game / type…", () => metaDialog(f));
+  add("Set picture…", () => { const i = document.createElement("input"); i.type = "file"; i.accept = "image/*"; i.onchange = () => { const x = i.files[0]; if (x) { setPic(norm(stem(f.file)), stem(f.file) + (x.name.match(/\.[^.]*$/) || [".png"])[0], x); render(true); } }; i.click(); });
+  if (pics.has(norm(stem(f.file)))) add("Clear picture", () => { const k = norm(stem(f.file)); idb.del("pics", pics.get(k).name); pics.delete(k); picsChanged(); render(true); });
+  add("Fetch picture from wiki", async () => { const [ok] = await wikiRun(lsGet("wikiBase", WIKI_DEFAULT), false, true, (t) => setMsg(t), () => false, [f]); setMsg(ok ? "Picture found" : "Not found on the wiki (see log)", !ok); });
+  add("Rename (by character ID)…", () => { const n = prompt(`Name for character ID ${f.charId}`, figLabel(f)); if (n && n.trim()) { nameOverrides[f.charId] = n.trim(); const o = lsGet("names", {}); o[f.charId] = n.trim(); lsSet("names", o); metaRev++; picsChanged(); render(true); } });
+  add("Download dump" + (f.backup ? " (with game progress)" : ""), () => download(f.file, f.data));
+  if (f.backup) add("Download original backup", () => download(f.file + ".bak", f.backup));
+  if (f.backup) add("Reset to original (discard game progress)", () => revertFig(f), "danger");
+  add("Remove from library", () => { const s = session.slotOf(f); if (s !== null) session.remove(s); figs.splice(figs.indexOf(f), 1); selected.delete(f); idb.del("figs", f.id); if (favs.delete(f.id)) saveFavs(); render(true); }, "danger");
+  add("Close", () => {});
+  d.showModal();
+}
+function editDialog(f) {   // save editor: XP, gold, hero points, nickname, hat, skills (port of skylander_editor.py)
+  const d = $("dlg"); d.innerHTML = "";
+  const h = document.createElement("h3"); h.textContent = "Edit " + figLabel(f); d.appendChild(h);
+  const closeBtn = (label = "Cancel") => { const b = document.createElement("button"); b.textContent = label; b.onclick = () => d.close(); d.appendChild(b); };
+  let fd; try { fd = FigureDump.fromBytes(f.data); } catch (e) { const p = document.createElement("p"); p.className = "hint"; p.textContent = "Cannot read this dump: " + e.message; d.appendChild(p); closeBtn("Close"); d.showModal(); return; }
+  if (fd.blank) {
+    const p = document.createElement("p"); p.className = "hint"; p.textContent = "This figure has no save data yet. It has never been used in a game, so its data blocks are empty (no XP, gold or nickname to edit). Put it on the portal in a game once, let the progress come back, then edit it.";
+    d.appendChild(p); closeBtn("Close"); d.showModal(); return;
+  }
+  const rep = fd.report(), bad = Object.entries(rep).filter(([k, [a, b]]) => a !== b).map(([k]) => { const [t, ar] = k.split(","); return `type ${t}/A${ar}`; });
+  const info = document.createElement("pre"); info.className = "info";
+  info.textContent = `UID ${fd.uid()} · figure ID ${fd.plain[16] | (fd.plain[17] << 8)} · data ${fd.encrypted ? "encrypted" : "plain"}\nAreas: A0 ${areaBlank(fd.plain, 0) ? "empty" : "seq " + fd.seq(0)} / A1 ${areaBlank(fd.plain, 1) ? "empty" : "seq " + fd.seq(1)} → editing A${fd.activeArea()}\nChecksums: ${bad.length ? "bad: " + bad.join(", ") + " (types 1-4 are repaired on save)" : "all OK"}`;
+  d.appendChild(info);
+  const g = document.createElement("div"); g.className = "fld"; d.appendChild(g);
+  const inp = {};
+  const add = (key, label, type, val, attrs = {}) => { const l = document.createElement("label"); l.textContent = label; const i = document.createElement("input"); i.type = type; for (const k in attrs) i.setAttribute(k, attrs[k]); i.value = val; inp[key] = i; g.append(l, i); return i; };
+  add("level", "Level", "number", levelForXp(fd.getXp()), { min: 1, max: 20, inputmode: "numeric" });
+  add("xp", "XP", "number", fd.getXp(), { min: 0, max: XP_MAX, inputmode: "numeric" });
+  add("gold", "Gold", "number", fd.getGold(), { min: 0, max: 65000, inputmode: "numeric" });
+  add("hp", "Hero points", "number", fd.getHeroPoints(), { min: 0, max: 100, inputmode: "numeric" });
+  add("name", "Nickname", "text", fd.getName(), { maxlength: 14, autocomplete: "off" });
+  add("hat", "Hat ID", "number", fd.getHat(), { min: 0, max: HAT_MAX, inputmode: "numeric" });
+  const sk = add("skills", "Skill bits (hex)", "text", fd.getSkills().toString(16).toUpperCase().padStart(4, "0"), { maxlength: 4, autocomplete: "off", autocapitalize: "characters" });
+  const sl = document.createElement("label"); sl.textContent = "Skill presets"; const sr = document.createElement("div");
+  for (const [t, v] of [["All – left", "0FFD"], ["All – right", "0FFF"]]) { const b = document.createElement("button"); b.textContent = t; b.onclick = () => { sk.value = v; }; sr.appendChild(b); }
+  g.append(sl, sr);
+  inp.level.onchange = () => { const l = Math.max(1, Math.min(20, parseInt(inp.level.value, 10) || 1)); inp.level.value = l; if (l !== levelForXp(Number(inp.xp.value) || 0)) inp.xp.value = LEVEL_XP[l - 1]; };
+  inp.xp.oninput = () => { inp.level.value = levelForXp(Number(inp.xp.value) || 0); };
+  const note = document.createElement("p"); note.className = "hint"; note.textContent = "Saving changes the copy stored in this browser (the original is kept, use “Reset to original” to undo). If the figure is on the portal and the Flipper is connected, the new data is sent to it. Games may behave oddly with impossible values."; d.appendChild(note);
+  const save = document.createElement("button"); save.className = "primary"; save.textContent = "Save changes";
+  save.onclick = () => {
+    const num = (k, label, lo, hi, base = 10) => { const t = inp[k].value.replace(/[,\s]/g, ""); if (!(base === 16 ? /^[0-9a-fA-F]{1,4}$/ : /^\d+$/).test(t)) throw new Error(`${label} must be a number.`); const x = parseInt(t, base); if (x < lo || x > hi) throw new Error(`${label} must be between ${lo} and ${hi}.`); return x; };
+    const snap = Uint8Array.from(fd.plain);
+    try {
+      const vals = [num("xp", "XP", 0, XP_MAX), num("gold", "Gold", 0, 65000), num("hp", "Hero points", 0, 100), inp.name.value, num("hat", "Hat ID", 0, HAT_MAX), num("skills", "Skill bits", 0, 0xFFFF, 16)];
+      if (fd.validFound === 0 && !confirm("This dump had no valid checksums (blank, corrupt or an unsupported game). Save anyway?")) return;
+      const changed = fd.apply(...vals);
+      if (!changed && !fd.badChecksums().length) { d.close(); setMsg("No changes to save."); return; }
+      fd.fixAll();
+      const out = fd.toBytes(), was = f.data;
+      if (!f.backup) f.backup = was;   // keep the first original so it can be reset
+      f.data = out; saveFig(f).then((ok) => { setMsg(ok ? `Saved ${figLabel(f)} (stored in this browser)` : `Could NOT store ${figLabel(f)} in this browser. Use Download dump so nothing is lost.`, !ok); render(true); });
+      const slot = session.slotOf(f);
+      if (slot !== null && session.connected && session.synced) { session.state.set(slot, SENDING); session.send(P.load(slot, f.data)); log(`${figLabel(f)} edited; sent to the Flipper`); }
+      else log(`${figLabel(f)} edited`);
+      d.close(); render(true);
+    } catch (e) { fd.plain.set(snap); setMsg(e.message, true); const p = document.createElement("p"); p.className = "r"; p.textContent = e.message; note.after(p); setTimeout(() => p.remove(), 5000); }
+  };
+  d.appendChild(save); closeBtn(); d.showModal();
+}
+function revertFig(f) {
+  if (!f.backup) return;
+  if (!confirm(`Discard the saved game progress for ${figLabel(f)} and go back to the original dump?`)) return;
+  f.data = Uint8Array.from(f.backup); delete f.backup; saveFig(f);
+  const s = session.slotOf(f);
+  if (s !== null && session.connected && session.synced) { session.state.set(s, SENDING); session.send(P.load(s, f.data)); }
+  setMsg(`${figLabel(f)} reset to the original dump`); render(true);
+}
+
+/* ---- export all (zip, stored without compression) ---- */
+const CRC_TABLE = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(data) { let c = 0xFFFFFFFF; for (let i = 0; i < data.length; i++) c = CRC_TABLE[(c ^ data[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function makeZip(entries) {   // entries: [{ name, data: Uint8Array }]
+  const enc = new TextEncoder(), parts = [], central = [], now = new Date();
+  const dosTime = (now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1);
+  const dosDate = ((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
+  let offset = 0;
+  for (const e of entries) {
+    const name = enc.encode(e.name), crc = crc32(e.data), size = e.data.length;
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true);
+    lh.setUint16(10, dosTime, true); lh.setUint16(12, dosDate, true); lh.setUint32(14, crc, true); lh.setUint32(18, size, true); lh.setUint32(22, size, true);
+    lh.setUint16(26, name.length, true); lh.setUint16(28, 0, true);
+    parts.push(new Uint8Array(lh.buffer), name, e.data);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint16(10, 0, true);
+    ch.setUint16(12, dosTime, true); ch.setUint16(14, dosDate, true); ch.setUint32(16, crc, true); ch.setUint32(20, size, true); ch.setUint32(24, size, true);
+    ch.setUint16(28, name.length, true); ch.setUint32(42, offset, true);
+    central.push(new Uint8Array(ch.buffer), name);
+    offset += 30 + name.length + size;
+  }
+  let csize = 0; for (const c of central) csize += c.length;
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, entries.length, true); end.setUint16(10, entries.length, true); end.setUint32(12, csize, true); end.setUint32(16, offset, true);
+  return new Blob([...parts, ...central, new Uint8Array(end.buffer)], { type: "application/zip" });
+}
+function exportAll() {
+  if (!figs.length) return setMsg("No figures to export.", true);
+  const used = new Set(), clean = (p) => p.split("/").filter((x) => x && x !== "." && x !== "..").map((x) => x.replace(/[\\:*?"<>|\x00-\x1f]/g, "_")).join("/");
+  const uniq = (path) => { let n = path, i = 1; const dot = path.lastIndexOf("."), base = dot > path.lastIndexOf("/") ? path.slice(0, dot) : path, ext = base.length < path.length ? path.slice(base.length) : ""; while (used.has(n.toLowerCase())) n = `${base} (${++i})${ext}`; used.add(n.toLowerCase()); return n; };
+  const entries = []; let withProgress = 0;
+  for (const f of figs) {
+    let path = clean(f.path || "");
+    if (!path || !path.toLowerCase().endsWith(f.file.toLowerCase())) { const m = metaFor(f); path = clean(`${m.game || "Unsorted"}/${f.file}`); }
+    entries.push({ name: uniq(path), data: f.data });
+    if (f.backup) { withProgress++; entries.push({ name: uniq("_originals/" + clean(f.file)), data: f.backup }); }
+  }
+  const d = new Date(), pad = (n) => String(n).padStart(2, "0");
+  download(`skylanders-dumps-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.zip`, makeZip(entries));
+  setMsg(`Exported ${figs.length} dump${figs.length === 1 ? "" : "s"} (with saved game progress)` + (withProgress ? `; originals of ${withProgress} are in _originals/` : ""));
+  log(`Exported ${figs.length} dumps to a zip`);
+}
+async function download(name, data) {
+  const blob = data instanceof Blob ? data : new Blob([data], { type: "application/octet-stream" });
+  const file = new File([blob], name, { type: blob.type || "application/octet-stream" });
+  const touch = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/i.test(navigator.platform));
+  if (touch && navigator.canShare && navigator.canShare({ files: [file] })) {   // phones: open the share sheet (Save to Files, AirDrop...)
+    try { await navigator.share({ files: [file], title: name }); return; } catch (e) { if (e && e.name === "AbortError") return; }
+  }
+  const url = URL.createObjectURL(blob), a = document.createElement("a");
+  a.href = url; a.download = name; a.style.display = "none"; document.body.appendChild(a); a.click();
+  setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 60000);
+}
+
+/* ---- status ---- */
+function renderStatus() {
+  const s = session, col = { connected: "g", connecting: "w" }[s.link] || "";
+  let console_ = s.consoleText(); if (s.connected && s.gameName) console_ = `${s.gameName} - ${console_}`;
+  $("status").innerHTML = `<div><b>Bluetooth:</b> <span class="${col}"></span></div><div><b>Console:</b> <span class="${(s.usb || 0) >= 2 ? "g" : s.connected ? "w" : ""}"></span></div><div><b>Game progress:</b> <span></span></div>`;
+  $("status").querySelectorAll("span")[0].textContent = s.link + (s.connected && s.linkDetail ? ` (${s.linkDetail})` : "") + (demoFlip && s.transport === demoFlip ? " · DEMO" : "");
+  $("status").querySelectorAll("span")[1].textContent = console_;
+  $("status").querySelectorAll("span")[2].textContent = !s.writeBack ? "write-back is off" : s.frames ? `${s.saves} saved to this browser (${s.frames} update${s.frames === 1 ? "" : "s"} from the Flipper)` : "nothing received from the Flipper yet";
+  $("bConnect").textContent = s.connected ? "Disconnect" : s.link === "connecting" ? "Connecting…" : "Connect";
+  $("bConnect").className = s.connected ? "" : "primary";
+  const dg = $("bDemoGame"), demo = demoFlip && s.transport === demoFlip;
+  dg.style.display = demo ? "" : "none"; if (demo) dg.textContent = "Game: " + GAME_NAMES[demoFlip.game];
+}
+function render(force) {
+  const s = session;
+  const sig = JSON.stringify([[...s.placed].map(([k, f]) => [k, f.file, s.state.get(k)]), s.connected, s.game, [...selected].map((f) => f.file), figs.length, $("q").value, $("filter").value, $("gameF").value, $("kindF").value, $("groupBy").value, $("catF").value, picRev, metaRev, window.innerWidth < window.innerHeight * 0.9]);
+  if (force || sig !== lastSig) { refreshCats(); lastSig = sig; draw(); renderList(); }
+  renderStatus();
+  if (s.problem && s.problem !== render.shown) setMsg(s.problem, true);
+  render.shown = s.problem;
+}
+
+/* ---- Flipper SD-card file transfer (requires matching ToyBox firmware protocol) ---- */
+const flipperFiles = { listing: false, paths: [], dir: "", listTimer: null, readTimer: null, current: null, queue: [], imported: 0, skipped: 0, writing: false, writeResults: [] };
+const LIST_IDLE_MS = 20000, READ_IDLE_MS = 12000;
+const utf8 = new TextEncoder();
+function sendFileCommand(type, payload = new Uint8Array(0)) {
+  if (!session || !session.connected) throw new Error("Connect to the Flipper first");
+  session.send(encode(type, payload));
+}
+function pathPayload(path) {
+  const b = utf8.encode(path);
+  if (!b.length || b.length > 250) throw new Error("Flipper path is too long");
+  return b;
+}
+function startFlipperDumpSearch() {
+  if (!session.connected) return setMsg("Connect to the Flipper first.", true);
+  clearTimeout(flipperFiles.readTimer);
+  flipperFiles.listing = true; flipperFiles.paths = []; flipperFiles.dir = ""; flipperFiles.queue = []; flipperFiles.current = null;
+  flipperFiles.imported = 0; flipperFiles.skipped = 0;
+  armListWatchdog();
+  setMsg("Searching the Flipper SD card for 1024-byte dumps…");
+  log("Requesting dump list from Flipper SD card");
+  try { sendFileCommand(MSG.DUMP_LIST); } catch (e) { flipperFiles.listing = false; clearTimeout(flipperFiles.listTimer); setMsg(e.message, true); }
+}
+/* If the Flipper stops sending list items (radio stall, link lost), do not wait forever:
+   carry on with what arrived so far. */
+function armListWatchdog() {
+  clearTimeout(flipperFiles.listTimer);
+  flipperFiles.listTimer = setTimeout(() => {
+    if (!flipperFiles.listing) return;
+    flipperFiles.listing = false;
+    const n = new Set(flipperFiles.paths).size;
+    log(`Flipper list stalled after ${n} dumps`);
+    if (!n) { setMsg("The Flipper did not send a dump list. Check the Bluetooth link (the R counter on the Flipper screen should not keep climbing), then try again.", true); return; }
+    setMsg(`The Flipper stopped sending the list; continuing with the ${n} dumps received so far.`, true);
+    flipperFiles.queue = [...new Set(flipperFiles.paths)];
+    requestNextFlipperDump();
+  }, LIST_IDLE_MS);
+}
+/* One list frame holds several lines: ">dir" sets the folder, a bare name is a file in it, and
+   a line starting with "/" is a complete path (older firmware sends one full path per frame). */
+function acceptListLines(payload) {
+  const ok = (p) => (p.startsWith("/ext/apps_data/skybase/") || p.startsWith("/ext/apps_assets/skybase/")) && !p.includes("..") && !p.includes("\\");
+  for (const line of new TextDecoder().decode(payload).split("\n")) {
+    if (!line) continue;
+    if (line[0] === ">") { flipperFiles.dir = line.slice(1); continue; }
+    const path = line[0] === "/" ? line : flipperFiles.dir + "/" + line;
+    if (ok(path)) flipperFiles.paths.push(path);
+  }
+}
+async function importFlipperBytes(path, bytes) {
+  const name = path.split("/").pop() || "flipper-dump.bin";
+  try {
+    const fig = makeFigure(name, bytes, path, "flipper:" + path);
+    const existing = figs.findIndex((f) => f.id === fig.id);
+    if (existing >= 0) {
+      const old = figs[existing];
+      if (old.backup) { flipperFiles.skipped++; return; }
+      figs.splice(existing, 1);
+    } else {
+      const same = figs.find((f) => f.serial === fig.serial && f.charId === fig.charId && f.variant === fig.variant);
+      if (same) {
+        if (folderScore(fig.path) > folderScore(same.path)) { same.path = fig.path; await saveFig(same); }
+        flipperFiles.skipped++; return;
+      }
+    }
+    figs.push(fig); await saveFig(fig); flipperFiles.imported++;
+  } catch (e) { flipperFiles.skipped++; log(`Skipped ${path}: ${e.message}`); }
+}
+function requestNextFlipperDump() {
+  if (!flipperFiles.queue.length) {
+    clearTimeout(flipperFiles.readTimer);
+    flipperFiles.current = null; figs.sort((a,b) => figLabel(a).localeCompare(figLabel(b))); saveMeta(); render(true);
+    setMsg(`Flipper import complete: ${flipperFiles.imported} added, ${flipperFiles.skipped} skipped.`);
+    log(`Flipper import complete (${flipperFiles.imported} added, ${flipperFiles.skipped} skipped)`);
+    return;
+  }
+  flipperFiles.current = flipperFiles.queue.shift();
+  setMsg(`Loading from Flipper: ${flipperFiles.current} (${flipperFiles.imported} added, ${flipperFiles.queue.length} to go)…`);
+  clearTimeout(flipperFiles.readTimer);
+  const waiting = flipperFiles.current;
+  flipperFiles.readTimer = setTimeout(() => {   // a lost reply must not stop the whole import
+    if (flipperFiles.current !== waiting) return;
+    flipperFiles.current = null; flipperFiles.skipped++; log(`No reply from the Flipper for ${waiting}; skipped`);
+    try { requestNextFlipperDump(); } catch (e) { setMsg(e.message, true); }
+  }, READ_IDLE_MS);
+  sendFileCommand(MSG.DUMP_READ, pathPayload(flipperFiles.current));
+}
+async function handleFlipperFileFrame(frame) {
+  if (frame.type === MSG.RESULT && frame.payload.length >= 3) {
+    const request = frame.payload[0], code = frame.payload[2];
+    if (request === MSG.DUMP_READ && flipperFiles.current) {
+      const failedPath = flipperFiles.current; flipperFiles.current = null; clearTimeout(flipperFiles.readTimer); flipperFiles.skipped++;
+      log(`Flipper could not read ${failedPath} (code ${code})`); requestNextFlipperDump(); return;
+    }
+    if (request === MSG.DUMP_WRITE_END) {
+      flipperFiles.writeResults.push({ ok: code === 0, code });
+      if (code !== 0) log(`Flipper SD write failed (code ${code})`);
+      return;
+    }
+  }
+  if (frame.type === MSG.DUMP_LIST_ITEM && flipperFiles.listing) {
+    if (!frame.payload.length) {
+      flipperFiles.listing = false; clearTimeout(flipperFiles.listTimer);
+      flipperFiles.queue = [...new Set(flipperFiles.paths)];
+      log(`Flipper listed ${flipperFiles.queue.length} dump files`);
+      if (!flipperFiles.queue.length) { setMsg("No 1024-byte dumps found under /ext/apps_data/skybase or /ext/apps_assets/skybase. Check that the patched ToyBox app is installed and the SD card is mounted.", true); return; }
+      requestNextFlipperDump(); return;
+    }
+    acceptListLines(frame.payload);
+    armListWatchdog();
+    setMsg(`Searching the Flipper SD card… ${new Set(flipperFiles.paths).size} dumps found so far`);
+    return;
+  }
+  if (frame.type === MSG.DUMP_DATA && flipperFiles.current) {
+    if (frame.payload.length !== FIGURE_SIZE) { flipperFiles.skipped++; log(`Bad dump length for ${flipperFiles.current}`); requestNextFlipperDump(); return; }
+    const path = flipperFiles.current; flipperFiles.current = null; clearTimeout(flipperFiles.readTimer);
+    await importFlipperBytes(path, frame.payload);
+    requestNextFlipperDump();
+  }
+}
+async function saveSelectedToFlipper() {
+  if (!session.connected) return setMsg("Connect to the Flipper first.", true);
+  const chosen = [...selected];
+  if (!chosen.length) return setMsg("Select one or more figures first.", true);
+  if (!confirm(`Write ${chosen.length} dump(s) back to their original paths on the Flipper SD card? Existing files will be overwritten.`)) return;
+  flipperFiles.writing = true; flipperFiles.writeResults = [];
+  try {
+    for (let n = 0; n < chosen.length; n++) {
+      const fig = chosen[n];
+      let path = fig.path || "";
+      if (path.startsWith("flipper:")) path = path.slice(8);
+      if (!path.startsWith("/ext/apps_data/skybase/") || path.includes("..")) throw new Error(`${figLabel(fig)} has no safe original Flipper path. Import it from the Flipper first.`);
+      setMsg(`Writing ${n+1}/${chosen.length}: ${figLabel(fig)}…`);
+      sendFileCommand(MSG.DUMP_WRITE_BEGIN, pathPayload(path));
+      for (let offset = 0; offset < FIGURE_SIZE; offset += 180) {
+        const part = fig.data.slice(offset, Math.min(FIGURE_SIZE, offset + 180));
+        const payload = new Uint8Array(2 + part.length); payload[0] = offset & 255; payload[1] = offset >> 8; payload.set(part, 2);
+        sendFileCommand(MSG.DUMP_WRITE_CHUNK, payload);
+      }
+      sendFileCommand(MSG.DUMP_WRITE_END);
+      // Each file protocol is sequential; allow the serialized BLE writes to drain before next file.
+      await new Promise(r => setTimeout(r, 5000));
+    }
+    const failed = flipperFiles.writeResults.filter(r => !r.ok).length;
+    setMsg(`Flipper save finished: ${flipperFiles.writeResults.length - failed}/${chosen.length} confirmed, ${failed} failed${flipperFiles.writeResults.length < chosen.length ? " (some replies were not received)" : ""}.`, failed > 0 || flipperFiles.writeResults.length < chosen.length);
+  } catch (e) { setMsg(`Could not save to Flipper: ${e.message}`, true); }
+  finally { flipperFiles.writing = false; }
+}
+
+/* ---- wiring ---- */
+function newSession(transport) {
+  const s = new Session(transport, log, (fig) => {   // live write-back: stored the moment the Flipper reports a change
+    setMsg(`Game progress for ${figLabel(fig)} received...`); render(true);
+    saveFig(fig).then((ok) => { setMsg(ok ? `Saved game progress for ${figLabel(fig)} (stored in this browser)` : `Could NOT store progress for ${figLabel(fig)} in this browser. Use Download dump on it now so nothing is lost.`, !ok); render(true); });
+  });
+  s.writeBack = $("wb").checked; s.onChange = () => render();
+  s.onFileFrame = (frame) => { handleFlipperFileFrame(frame).catch(e => setMsg("Flipper file transfer failed: " + e.message, true)); };
+  return s;
+}
+function start() {
+  session = newSession(WebBleTransport.supported() ? new WebBleTransport() : new WebBleTransport());
+  if (!WebBleTransport.supported()) setMsg("This browser can't do Bluetooth. Use Chrome on Android (iPhone: the Bluefy browser). Demo mode still works.", true);
+  $("bConnect").onclick = () => { if (session.connected || session.link === "connecting") session.disconnect(); else session.connect(); };
+  $("bDemo").onclick = () => {
+    const keep = session.placed, st = session.state;
+    demoFlip = new FakeFlipper(1);
+    const old = session; session = newSession(demoFlip); session.placed = keep; for (const k of keep.keys()) session.state.set(k, LOCAL);
+    try { old.transport.disconnect(); } catch (e) {}
+    session.connect(); setMsg("Demo mode: a simulated Flipper is connected."); render(true);
+  };
+  $("bDemoGame").onclick = () => { demoFlip.setGame((demoFlip.game + 1) % GAME_NAMES.length); render(true); };
+  $("bPlaceSel").onclick = () => { const l = [...selected]; if (!l.length) return setMsg("Select one or more figures first.", true); placeFigs(l, null); };
+  $("bPlaceAll").onclick = () => { placeFigs(visibleFigs().filter((f) => session.slotOf(f) === null), null); };
+  $("bClear").onclick = () => { session.clear(); setMsg("Portal cleared"); render(true); };
+  $("wb").checked = lsGet("wb", true); session.writeBack = $("wb").checked;
+  $("wb").onchange = () => { session.writeBack = $("wb").checked; lsSet("wb", $("wb").checked); };
+  $("bExport").onclick = exportAll;
+  $("bFlipperDumps").onclick = startFlipperDumpSearch;
+  $("bSaveFlipper").onclick = saveSelectedToFlipper;
+  const fillSel = (id, all, arr) => { $(id).innerHTML = `<option value="">${all}</option>` + arr.map((x) => `<option>${x}</option>`).join("") + `<option value="?">Unsorted</option>`; };
+  fillSel("gameF", "All games", GAME_LIST); fillSel("kindF", "All types", KIND_LIST);
+  $("q").oninput = () => render(true); $("filter").onchange = () => render(true);
+  for (const id of ["gameF", "kindF", "catF", "groupBy"]) $(id).onchange = () => render(true);
+  $("bWiki").onclick = wikiDialog;
+  $("bClearAll").onclick = clearAllDialog;
+  $("bMissing").onclick = missingPicsDialog;
+  $("fFiles").onchange = (e) => { ingest([...e.target.files]); e.target.value = ""; };
+  const gs = $("gameDirSel"); gs.innerHTML = `<option value="">Folder for a game…</option>` + GAME_LIST.map((g, i) => `<option value="${esc(g)}">${i + 1}. ${esc(g)}</option>`).join("");
+  gs.onchange = () => { if (gs.value) $("fGameDir").click(); };
+  $("fGameDir").onchange = (e) => { const g = gs.value; ingest([...e.target.files], g || null); e.target.value = ""; gs.value = ""; };
+  $("fFolder").onchange = (e) => { ingest([...e.target.files]); e.target.value = ""; };
+  $("fPics").onchange = (e) => { ingest([...e.target.files]); e.target.value = ""; };
+  $("fPicDir").onchange = (e) => { ingest([...e.target.files].filter((x) => IMAGE_RE.test(x.name))); e.target.value = ""; };
+  $("fNames").onchange = async (e) => { const f = e.target.files[0]; if (f) { const n = loadNamesCsv(await f.text()); const o = lsGet("names", {}); Object.assign(o, nameOverrides); lsSet("names", o); setMsg(`${n} names loaded`); metaRev++; picsChanged(); figs.sort((a, b) => figLabel(a).localeCompare(figLabel(b))); render(true); } e.target.value = ""; };
+  window.addEventListener("resize", () => render());
+  setInterval(() => { session.pollStatus(); }, 2000);
+  setInterval(() => render(), 500);
+  render(true);
+}
+(async () => {
+  Object.assign(nameOverrides, lsGet("names", {}));
+  await idb.open();
+  for (const k in meta) if (meta[k].src === "folder") delete meta[k];   // old, unreliable folder guesses
+  for (const r of await idb.all("figs")) { try { const fig = makeFigure(r.name || r.file, new Uint8Array(r.data), r.path || "", r.file); if (r.backup && r.backup.byteLength === FIGURE_SIZE) fig.backup = new Uint8Array(r.backup); figs.push(fig); } catch (e) {} }
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}   // ask the browser not to evict saved dumps
+  const canShow = (url) => new Promise((res) => { const im = new Image(), t = setTimeout(() => res(false), 8000); im.onload = () => { clearTimeout(t); res(im.naturalWidth > 0); }; im.onerror = () => { clearTimeout(t); res(false); }; im.src = url; });
+  let badPics = 0;
+  await Promise.all((await idb.all("pics")).map(async (r) => {
+    const k = norm(stem(r.name)); if (!k) return;
+    const blob = r.buf ? new Blob([r.buf], { type: r.type || "image/jpeg" }) : r.blob;
+    const url = blob && blob.size ? URL.createObjectURL(blob) : null;
+    if (url && await canShow(url)) pics.set(k, { name: r.name, url, auto: !!r.auto });
+    else { if (url) URL.revokeObjectURL(url); idb.del("pics", r.name); badPics++; }
+  }));
+  figs.sort((a, b) => figLabel(a).localeCompare(figLabel(b)));
+  start();
+  if (badPics) { log(`${badPics} saved picture${badPics === 1 ? "" : "s"} could not be shown and ${badPics === 1 ? "was" : "were"} removed; run Wiki pictures again to refetch`); setMsg(`${badPics} broken saved picture${badPics === 1 ? "" : "s"} cleared. Open Wiki pictures and press Start to download them again.`); }
+})();
+</script></body></html>

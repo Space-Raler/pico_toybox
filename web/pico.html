@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pico ToyBox</title>
+<style>
+  :root { --bg:#14161a; --card:#1e2127; --fg:#e8eaed; --dim:#9aa0a6; --acc:#4da3ff; --ok:#4cc38a; --bad:#ff6b6b; }
+  @media (prefers-color-scheme: light) { :root { --bg:#f4f5f7; --card:#fff; --fg:#1b1d21; --dim:#5f6368; --acc:#0b66d6; --ok:#12805c; --bad:#c62828; } }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:16px; background:var(--bg); color:var(--fg); font:15px/1.4 system-ui, sans-serif; max-width:760px; margin-inline:auto; }
+  h1 { font-size:20px; margin:0 0 12px; }
+  h2 { font-size:15px; margin:0 0 8px; }
+  section { background:var(--card); border-radius:10px; padding:12px; margin-bottom:12px; }
+  button, select { font:inherit; padding:8px 12px; border-radius:8px; border:1px solid #8884; background:transparent; color:var(--fg); }
+  button { cursor:pointer; } button.primary { background:var(--acc); color:#fff; border-color:transparent; }
+  button.active { outline:2px solid var(--acc); } button:disabled { opacity:.4; }
+  .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:6px 0; }
+  .dim { color:var(--dim); font-size:13px; }
+  #status { font-weight:600; } .ok { color:var(--ok); } .bad { color:var(--bad); }
+  #log { background:#000; color:#c8ffc8; font:12px/1.35 ui-monospace, Menlo, monospace; height:280px; overflow:auto; padding:8px; border-radius:8px; white-space:pre-wrap; word-break:break-all; }
+  #log .E { color:#ff8a8a; } #log .D { color:#8aa0b8; }
+  table { width:100%; border-collapse:collapse; } td { padding:4px 0; border-top:1px solid #8883; }
+  .slot { display:flex; justify-content:space-between; gap:8px; align-items:center; }
+</style>
+</head>
+<body>
+<h1>Pico ToyBox</h1>
+
+<section>
+  <div class="row"><button id="connect" class="primary">Connect</button><span id="status" class="dim">Not connected</span></div>
+  <div class="dim" id="hint">Needs Chrome on Android or the Bluefy browser on iPhone. The Pico advertises as “PicoToyBox”.</div>
+</section>
+
+<section id="modeBox">
+  <h2>Which base should the Pico pretend to be?</h2>
+  <div class="row">
+    <button data-mode="1">Disney Infinity</button>
+    <button data-mode="2">Skylanders</button>
+    <button data-mode="3">LEGO Dimensions</button>
+  </div>
+  <div class="row" id="gameRow"><label class="dim" for="game">Skylanders game</label>
+    <select id="game"><option value="0">Swap Force</option><option value="1" selected>Trap Team</option><option value="2">Imaginators</option><option value="3">SuperChargers</option><option value="4">Giants</option><option value="5">Spyro's Adventure</option></select></div>
+  <div class="dim">Pick the base <b>before</b> starting the game. The console sees the Pico unplugged and plugged in again as a different device. Do not switch during a game.</div>
+  <div class="row"><span id="modeInfo" class="dim"></span></div>
+  <div class="row"><button id="replug">Re-plug USB (same base)</button></div>
+</section>
+
+<section id="infBox" hidden>
+  <h2>Infinity figures</h2>
+  <div class="dim">Pick a 320-byte figure dump (.bin) for a slot. Dumps stay on this phone; the Pico remembers loaded figures across power-ups.</div>
+  <table id="infSlots"></table>
+  <div class="row"><button id="infClear">Clear base</button></div>
+  <div class="dim">Skylanders and LEGO have their own pages (skylanders.html, lego_dimensions.html): switch the mode here, disconnect, then open that page and Connect.</div>
+</section>
+
+<section>
+  <h2>Log</h2>
+  <div class="row">
+    <button id="logGet">Load buffered log</button>
+    <label><input type="checkbox" id="logLive" checked> live</label>
+    <select id="logLevel"><option value="0">errors</option><option value="1" selected>events</option><option value="2">everything (chatty)</option></select>
+    <button id="logSave">Save as file</button><button id="logClear">Clear</button><button id="infoBtn">Info</button>
+  </div>
+  <div id="log"></div>
+</section>
+
+<script>
+"use strict";
+const SERVICE = "6e400001-b5a3-f393-e0a9-e50e24dcca9e", RXC = "6e400002-b5a3-f393-e0a9-e50e24dcca9e", TXC = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
+const SOF = 0xA5;
+const M = { HELLO:1, LOAD:2, REMOVE:3, CLEAR:4, STATUS_REQ:5, STATUS:0x81, RESULT:0x82, SAVE:0x83,
+            MODE_GET:0x30, MODE_SET:0x31, LOG_GET:0x32, LOG_CTL:0x33, LOG_CLEAR:0x34, INFO_GET:0x35,
+            MODE:0xB0, LOG_TEXT:0xB1, INFO:0xB2 };
+const MODE_NAMES = { 1:"Infinity", 2:"Skylanders", 3:"LEGO Dimensions" };
+const USB_TEXT = ["USB: console not connected", "USB: console found the device", "USB: console connected", "USB: game talking"];
+const RESULT_TEXT = ["ok","bad slot","bad length","not present","unknown command","not ready"];
+const INF_ROWS = [[3,"Player 1"],[6,"Player 2"],[0,"Play set"],[1,"Disc 2"],[2,"Disc 3"],[4,"P1 disc 1"],[5,"P1 disc 2"],[7,"P2 disc 1"],[8,"P2 disc 2"]];
+
+const $ = (id) => document.getElementById(id);
+function crc8(a){ let c=0; for(const b of a){ c^=b; for(let i=0;i<8;i++) c=(c&0x80)?((c<<1)^0x07)&0xFF:(c<<1)&0xFF; } return c; }
+function encode(type, payload=new Uint8Array(0)){
+  const n=payload.length, f=new Uint8Array(5+n); f[0]=SOF; f[1]=type; f[2]=n&255; f[3]=n>>8; f.set(payload,4);
+  f[4+n]=crc8(f.subarray(1,4+n)); return f;
+}
+class Parser { constructor(cb){ this.buf=[]; this.cb=cb; }
+  feed(bytes){ for(const b of bytes) this.buf.push(b); this.scan(); }
+  scan(){ for(;;){
+    while(this.buf.length && this.buf[0]!==SOF) this.buf.shift();
+    if(this.buf.length<4) return;
+    const len=this.buf[2]|(this.buf[3]<<8);
+    if(len>1100){ this.buf.shift(); continue; }
+    if(this.buf.length<5+len) return;
+    const body=this.buf.slice(1,4+len);
+    if(crc8(body)===this.buf[4+len]){ this.cb(this.buf[1], new Uint8Array(this.buf.slice(4,4+len))); this.buf.splice(0,5+len); }
+    else this.buf.shift();
+  } } }
+
+let device=null, rx=null, state={ mode:0, game:1, usb:0, level:1 }, writeQ=[], writing=false, present=0, logText="";
+let curVersionSeen=0;
+
+function setStatus(t, cls){ const s=$("status"); s.textContent=t; s.className=cls||"dim"; }
+function addLog(text){
+  const el=$("log"); const stick = el.scrollTop+el.clientHeight >= el.scrollHeight-20;
+  for(const line of text.split("\n")){ if(!line) continue;
+    logText+=line+"\n";
+    const d=document.createElement("div"); const m=/^\d+\.\d+ ([EID]) /.exec(line); if(m) d.className=m[1]; d.textContent=line; el.appendChild(d); }
+  while(el.childElementCount>1500) el.removeChild(el.firstChild);
+  if(stick) el.scrollTop=el.scrollHeight;
+}
+function note(t){ addLog("-- "+t+"\n"); }
+
+const parser = new Parser((type, p) => {
+  if(type===M.LOG_TEXT){ if(p.length) addLog(new TextDecoder().decode(p)); else note("end of buffered log"); }
+  else if(type===M.INFO){ note("INFO"); addLog(new TextDecoder().decode(p)); }
+  else if(type===M.MODE){
+    state={ mode:p[0], game:p[1], usb:p[2], level:p[3], stream:p[4], fw:`${p[5]}.${p[6]}`, persist:p[7] };
+    renderMode();
+  }
+  else if(type===M.STATUS){
+    curVersionSeen=p[0];
+    if(p[0]===1){ present=p[2]|(p[3]<<8); state.usb=p[1]; renderInf(); renderMode(); }
+  }
+  else if(type===M.RESULT){ if(p[2]!==0) note(`request ${p[0].toString(16)} slot ${p[1]}: ${RESULT_TEXT[p[2]]||p[2]}`); }
+  else if(type===M.SAVE){
+    note(`the game changed the figure in slot ${p[0]}: offering it as a download`);
+    const name=`infinity_slot${p[0]}_${Date.now()}.bin`;
+    const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([p.slice(1)])); a.download=name; a.textContent="Download "+name;
+    const d=document.createElement("div"); d.appendChild(a); $("log").appendChild(d);
+  }
+});
+
+function renderMode(){
+  document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active", +b.dataset.mode===state.mode));
+  $("infBox").hidden = state.mode!==1;
+  $("gameRow").style.display = (state.mode===2||state.mode===0)?"flex":"none";
+  if(state.mode===2) $("game").value=String(state.game);
+  $("logLevel").value=String(state.level);
+  $("modeInfo").textContent = state.mode ? `Now: ${MODE_NAMES[state.mode]} · ${USB_TEXT[state.usb]||""} · firmware ${state.fw}${state.persist===0?" · FLASH SAVE FAILED":""}` : "";
+}
+function renderInf(){
+  const t=$("infSlots"); t.textContent="";
+  for(const [slot,label] of INF_ROWS){
+    const tr=document.createElement("tr"), td=document.createElement("td"); td.className="slot";
+    const on=(present>>slot)&1;
+    const name=document.createElement("span"); name.textContent=`${label}: ${on?"figure loaded":"empty"}`; if(on) name.className="ok";
+    const btns=document.createElement("span");
+    const load=document.createElement("button"); load.textContent=on?"Replace":"Load…";
+    load.onclick=()=>pickFile(slot);
+    btns.appendChild(load);
+    if(on){ const rm=document.createElement("button"); rm.textContent="Remove"; rm.onclick=()=>send(M.REMOVE, Uint8Array.of(slot)); btns.appendChild(rm); }
+    td.append(name,btns); tr.appendChild(td); t.appendChild(tr);
+  }
+}
+function pickFile(slot){
+  const i=document.createElement("input"); i.type="file"; i.accept=".bin,.dump,*/*";
+  i.onchange=async()=>{ const f=i.files[0]; if(!f) return; const b=new Uint8Array(await f.arrayBuffer());
+    if(b.length!==320){ note(`${f.name} is ${b.length} bytes; an Infinity figure dump is 320`); return; }
+    const p=new Uint8Array(321); p[0]=slot; p.set(b,1); send(M.LOAD,p); note(`sending ${f.name} to slot ${slot}`); };
+  i.click();
+}
+
+/* ---- Bluetooth ---- */
+function send(type, payload){ writeQ.push(encode(type,payload)); drain(); }
+async function drain(){
+  if(writing) return; writing=true;
+  try { while(writeQ.length && rx){ const f=writeQ.shift();
+    for(let i=0;i<f.length;i+=20){ await rx.writeValueWithResponse(f.slice(i,i+20)); }
+    await new Promise(r=>setTimeout(r,60)); } }
+  catch(e){ note("write failed: "+e.message); writeQ=[]; }
+  writing=false;
+}
+async function connect(){
+  if(!navigator.bluetooth){ setStatus("This browser has no Web Bluetooth (use Chrome on Android, or Bluefy on iPhone)","bad"); return; }
+  try{
+    setStatus("choose the device…");
+    device = await navigator.bluetooth.requestDevice({ filters:[{namePrefix:"PicoToyBox"}], optionalServices:[SERVICE] });
+    device.addEventListener("gattserverdisconnected", ()=>{ rx=null; setStatus("Disconnected","bad"); $("connect").textContent="Connect"; note("Bluetooth disconnected"); });
+    setStatus("connecting…");
+    const server=await device.gatt.connect();
+    const svc=await server.getPrimaryService(SERVICE);
+    rx=await svc.getCharacteristic(RXC);
+    const tx=await svc.getCharacteristic(TXC);
+    tx.addEventListener("characteristicvaluechanged", e=>{ const v=e.target.value; parser.feed(new Uint8Array(v.buffer, v.byteOffset, v.byteLength)); });
+    await tx.startNotifications();
+    setStatus("Connected","ok"); $("connect").textContent="Disconnect";
+    send(M.MODE_GET);
+    send(M.LOG_CTL, Uint8Array.of($("logLive").checked?1:0, 0xFF));
+    send(M.LOG_GET);
+  }catch(e){ if(e.name!=="NotFoundError") setStatus(`Could not connect: ${e.message}`,"bad"); else setStatus("No device chosen"); }
+}
+$("connect").onclick=()=>{ if(rx && device.gatt.connected) device.gatt.disconnect(); else connect(); };
+document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{
+  const m=+b.dataset.mode;
+  if(state.mode && m!==state.mode && !confirm("Switch base? Make sure the game on the console is closed.")) return;
+  send(M.MODE_SET, Uint8Array.of(m, +$("game").value)); note(`asked for ${MODE_NAMES[m]}`); });
+$("replug").onclick=()=>{ if(state.mode) send(M.MODE_SET, Uint8Array.of(state.mode, state.game)); };
+$("game").onchange=()=>{ if(state.mode===2) send(M.MODE_SET, Uint8Array.of(2, +$("game").value)); };
+$("infClear").onclick=()=>send(M.CLEAR);
+$("logGet").onclick=()=>send(M.LOG_GET);
+$("logLive").onchange=()=>send(M.LOG_CTL, Uint8Array.of($("logLive").checked?1:0, 0xFF));
+$("logLevel").onchange=()=>send(M.LOG_CTL, Uint8Array.of($("logLive").checked?1:0, +$("logLevel").value));
+$("logClear").onclick=()=>{ send(M.LOG_CLEAR); $("log").textContent=""; logText=""; };
+$("infoBtn").onclick=()=>send(M.INFO_GET);
+$("logSave").onclick=()=>{ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([logText],{type:"text/plain"})); a.download=`pico_toybox_log_${Date.now()}.txt`; a.click(); };
+renderInf(); renderMode();
+</script>
+</body>
+</html>

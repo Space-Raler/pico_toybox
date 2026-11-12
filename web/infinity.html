@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e1015">
+<title>Infinity Base</title>
+<style>
+:root{--bg:#0e1015;--panel:#151821;--body:#171a22;--rim:#2b3040;--empty:#1c202b;--text:#e8ecf3;--muted:#8a93a6;--good:#3be8a0;--warn:#f2c14e;--bad:#ff5a4d;--p1:#3aa0ff;--p2:#ff6a4d}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.35 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+body{padding:env(safe-area-inset-top) 12px calc(env(safe-area-inset-bottom) + 12px)}
+header{display:flex;gap:8px;align-items:center;padding:10px 0;position:sticky;top:0;background:var(--bg);z-index:5;flex-wrap:wrap}
+h1{font-size:17px;margin:0;flex:1 1 auto}
+button,.btn{background:var(--rim);color:var(--text);border:0;border-radius:10px;padding:10px 14px;font:inherit;cursor:pointer;min-height:42px}
+button:active,.btn:active{filter:brightness(1.3)}
+button.primary{background:#2a6df4}
+button.danger{background:#5a2a2e}
+button.on{background:#2a6df4}
+button:disabled{opacity:.4}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+.status{background:var(--panel);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--muted);display:grid;gap:2px}
+.status b{font-weight:600}
+.g{color:var(--good)}.w{color:var(--warn)}.r{color:var(--bad)}
+#msg{min-height:20px;margin:8px 2px;font-size:13px}
+.portal{background:var(--body);border:2px solid var(--rim);border-radius:22px;padding:6px;margin:8px 0}
+svg{width:100%;height:auto;display:block;touch-action:manipulation;user-select:none}
+.slot{cursor:pointer}
+.slot .ring{fill:var(--empty);stroke:var(--rim);stroke-width:5}
+.slot.target .ring{stroke:#fff;stroke-width:7;stroke-dasharray:14 10}
+.sl{fill:var(--muted);font-size:21px;text-anchor:middle;pointer-events:none}
+.nm{fill:#fff;font-size:22px;font-weight:600;text-anchor:middle;pointer-events:none;paint-order:stroke;stroke:#000;stroke-width:5px}
+.ini{fill:#fff;font-size:44px;font-weight:700;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.pl{font-size:26px;font-weight:700;text-anchor:middle;letter-spacing:3px}
+section{background:var(--panel);border-radius:14px;padding:10px;margin:10px 0}
+section h2{font-size:14px;margin:0 0 8px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+input[type=search],select{width:100%;background:var(--empty);border:1px solid var(--rim);color:var(--text);border-radius:10px;padding:10px;font:inherit;min-height:42px}
+.list{display:grid;gap:6px;margin-top:8px;max-height:52vh;overflow:auto;-webkit-overflow-scrolling:touch}
+.row{display:flex;align-items:center;gap:10px;background:var(--empty);border-radius:10px;padding:6px 8px;border:2px solid transparent;cursor:pointer}
+.row.sel{border-color:#2a6df4}
+.row.onp{opacity:.55}
+.thumb{width:44px;height:44px;border-radius:50%;flex:none;overflow:hidden;display:grid;place-items:center;font-weight:700;color:#fff;background-size:cover;background-position:center top}
+.row .t{flex:1;min-width:0}.row .t div:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .t small{color:var(--muted)}
+.row .more{background:transparent;padding:6px 10px;min-height:36px;color:var(--muted)}
+#log{font:11px/1.4 ui-monospace,monospace;color:var(--muted);max-height:160px;overflow:auto;white-space:pre-wrap}
+label.chk{display:flex;gap:8px;align-items:center;font-size:14px;margin-top:8px}
+.hint{color:var(--muted);font-size:12px;margin:6px 0 0}
+input[type=file]{display:none}
+dialog{background:var(--panel);color:var(--text);border:1px solid var(--rim);border-radius:16px;max-width:92vw;width:420px}
+dialog::backdrop{background:#000a}
+dialog button{display:block;width:100%;margin:6px 0;text-align:left}
+</style>
+</head>
+<body>
+<header>
+  <h1>Infinity Base</h1>
+  <button id="bConnect" class="primary">Connect</button>
+  <button id="bDemo">Demo</button>
+</header>
+<div class="status" id="status"></div>
+<div id="msg"></div>
+<div class="portal"><svg id="svg" xmlns="http://www.w3.org/2000/svg"></svg></div>
+<div class="bar">
+  <button id="bPlaceSel">Place selected</button>
+  <button id="bPlaceAll">Place all</button>
+  <button id="bClear" class="danger">Clear base</button>
+</div>
+<p class="hint">Tap a figure below to select it, then tap a slot. Tap a figure on the base to lift it off. Double-tap a list item to put it on the next free slot.</p>
+<section>
+  <h2>Figures</h2>
+  <div class="bar">
+    <label class="btn" for="fFiles">Add figures…</label>
+    <label class="btn" for="fFolder">Add folder…</label>
+    <label class="btn" for="fPics">Pictures…</label>
+    <label class="btn" for="fNames">names.csv…</label>
+  </div>
+  <input id="fFiles" type="file" multiple>
+  <input id="fFolder" type="file" webkitdirectory multiple>
+  <input id="fPics" type="file" accept="image/*" multiple>
+  <input id="fNames" type="file" accept=".csv,text/csv,text/plain">
+  <input type="search" id="q" placeholder="Search figures">
+  <div class="bar" style="margin-bottom:0">
+    <select id="filter" style="flex:1"><option>All</option><option>Characters</option><option>Play sets</option><option>Discs</option><option>Not on base</option><option>On base</option></select>
+    
+  </div>
+  <div class="list" id="list"></div>
+  <label class="chk"><input type="checkbox" id="wb" checked> Keep game progress sent back by the Flipper</label>
+  <p class="hint">Figures stay saved in this browser. Your 320-byte .bin dumps never leave your phone.</p>
+</section>
+<section><h2>Log</h2><div id="log"></div></section>
+<dialog id="dlg"></dialog>
+<script>
+/* ===== CORE (no DOM): protocol, crypto, layout, figures, session, transports ===== */
+const VERSION = 1, SOF = 0xA5, FIGURE_SIZE = 320, MAX_PAYLOAD = 1 + FIGURE_SIZE, SLOT_COUNT = 9;
+const MSG = { HELLO: 1, LOAD: 2, REMOVE: 3, CLEAR: 4, STATUS_REQ: 5, STATUS: 0x81, RESULT: 0x82, SAVE: 0x83 };
+const RESULT_TEXT = { 0: "ok", 1: "bad slot", 2: "bad length", 3: "nothing in that slot", 4: "unknown command" };
+const USB_TEXT = { 0: "Flipper not plugged into a console", 1: "console starting...", 2: "console connected", 3: "console silent", 4: "console disconnected" };
+const SERIAL_PROFILES = [
+  { service: "8fe5b3d5-2e7f-4a98-2a48-7acc60fe0000", a: "19ed82ae-ed21-4c9d-4145-228e61fe0000", b: "19ed82ae-ed21-4c9d-4145-228e62fe0000" },
+  { service: "6e400001-b5a3-f393-e0a9-e50e24dcca9e", a: "6e400002-b5a3-f393-e0a9-e50e24dcca9e", b: "6e400003-b5a3-f393-e0a9-e50e24dcca9e" },
+];
+
+function crc8(data, crc = 0) {
+  for (const byte of data) {
+    crc ^= byte;
+    for (let i = 0; i < 8; i++) crc = (crc & 0x80) ? ((crc << 1) ^ 0x07) & 0xFF : (crc << 1) & 0xFF;
+  }
+  return crc;
+}
+function encode(type, payload = new Uint8Array(0)) {
+  if (payload.length > MAX_PAYLOAD) throw new Error("payload too large");
+  const body = new Uint8Array(3 + payload.length);
+  body[0] = type; body[1] = payload.length & 0xFF; body[2] = payload.length >> 8;
+  body.set(payload, 3);
+  const out = new Uint8Array(body.length + 2);
+  out[0] = SOF; out.set(body, 1); out[out.length - 1] = crc8(body);
+  return out;
+}
+class Parser {
+  constructor() { this.buf = []; this.bad = 0; }
+  feed(data) {
+    for (const b of data) this.buf.push(b);
+    const frames = [];
+    for (;;) {
+      const start = this.buf.indexOf(SOF);
+      if (start < 0) { this.buf = []; break; }
+      if (start) this.buf.splice(0, start);
+      if (this.buf.length < 4) break;
+      const length = this.buf[2] | (this.buf[3] << 8);
+      if (length > MAX_PAYLOAD) { this.bad++; this.buf.shift(); continue; }
+      const total = 5 + length;
+      if (this.buf.length < total) break;
+      const body = this.buf.slice(1, 4 + length);
+      if (crc8(body) === this.buf[total - 1]) {
+        frames.push({ type: body[0], payload: Uint8Array.from(body.slice(3)) });
+        this.buf.splice(0, total);
+      } else { this.bad++; this.buf.shift(); }
+    }
+    return frames;
+  }
+}
+
+const P = {
+  hello: () => encode(MSG.HELLO, Uint8Array.of(VERSION)),
+  load(slot, fig) {
+    if (fig.length !== FIGURE_SIZE) throw new Error("figure must be 320 bytes");
+    const p = new Uint8Array(1 + FIGURE_SIZE); p[0] = slot; p.set(fig, 1); return encode(MSG.LOAD, p);
+  },
+  remove: (slot) => encode(MSG.REMOVE, Uint8Array.of(slot)),
+  clear: () => encode(MSG.CLEAR),
+  statusReq: () => encode(MSG.STATUS_REQ),
+  parseStatus(p) {
+    if (p.length < 4) throw new Error("short STATUS");
+    const mask = p[2] | (p[3] << 8), present = new Set();
+    for (let i = 0; i < 9; i++) if (mask & (1 << i)) present.add(i);
+    return { version: p[0], usb: p[1], present };
+  },
+  parseResult(p) { if (p.length < 3) throw new Error("short RESULT"); return { request: p[0], slot: p[1], code: p[2] }; },
+  parseSave(p) { if (p.length !== 1 + FIGURE_SIZE) throw new Error("bad SAVE length"); return [p[0], p.slice(1)]; },
+};
+
+/* ---- SHA-1 and AES-128 decrypt (sync, no dependencies) ---- */
+function sha1(msg) {
+  const rol = (x, n) => ((x << n) | (x >>> (32 - n))) >>> 0;
+  const l = msg.length, padLen = ((l + 9 + 63) >> 6) << 6, b = new Uint8Array(padLen);
+  b.set(msg); b[l] = 0x80;
+  const dv = new DataView(b.buffer); dv.setUint32(padLen - 4, (l * 8) >>> 0); dv.setUint32(padLen - 8, Math.floor((l * 8) / 4294967296));
+  let h0 = 0x67452301, h1 = 0xEFCDAB89, h2 = 0x98BADCFE, h3 = 0x10325476, h4 = 0xC3D2E1F0;
+  const w = new Array(80);
+  for (let o = 0; o < padLen; o += 64) {
+    for (let i = 0; i < 16; i++) w[i] = dv.getUint32(o + i * 4);
+    for (let i = 16; i < 80; i++) w[i] = rol(w[i - 3] ^ w[i - 8] ^ w[i - 14] ^ w[i - 16], 1);
+    let a = h0, bb = h1, c = h2, d = h3, e = h4;
+    for (let i = 0; i < 80; i++) {
+      let f, k;
+      if (i < 20) { f = (bb & c) | (~bb & d); k = 0x5A827999; }
+      else if (i < 40) { f = bb ^ c ^ d; k = 0x6ED9EBA1; }
+      else if (i < 60) { f = (bb & c) | (bb & d) | (c & d); k = 0x8F1BBCDC; }
+      else { f = bb ^ c ^ d; k = 0xCA62C1D6; }
+      const t = (rol(a, 5) + (f >>> 0) + e + k + w[i]) >>> 0;
+      e = d; d = c; c = rol(bb, 30); bb = a; a = t;
+    }
+    h0 = (h0 + a) >>> 0; h1 = (h1 + bb) >>> 0; h2 = (h2 + c) >>> 0; h3 = (h3 + d) >>> 0; h4 = (h4 + e) >>> 0;
+  }
+  const out = new Uint8Array(20), ov = new DataView(out.buffer);
+  [h0, h1, h2, h3, h4].forEach((h, i) => ov.setUint32(i * 4, h));
+  return out;
+}
+const [SBOX, INV_SBOX] = (() => {
+  const s = new Array(256).fill(0); let p = 1, q = 1;
+  do {
+    p = p ^ ((p << 1) & 0xFF) ^ (p & 0x80 ? 0x1B : 0);
+    q ^= q << 1; q ^= q << 2; q ^= q << 4; q &= 0xFF; if (q & 0x80) q ^= 0x09;
+    let x = q ^ (((q << 1) | (q >> 7)) & 0xFF);
+    x ^= ((q << 2) | (q >> 6)) & 0xFF; x ^= ((q << 3) | (q >> 5)) & 0xFF; x ^= ((q << 4) | (q >> 4)) & 0xFF;
+    s[p] = (x ^ 0x63) & 0xFF;
+  } while (p !== 1);
+  s[0] = 0x63; const inv = new Array(256); s.forEach((v, i) => (inv[v] = i)); return [s, inv];
+})();
+const xtime = (x) => (x & 0x80 ? ((x << 1) ^ 0x1B) & 0xFF : x << 1);
+function gmul(a, b) { let r = 0; while (b) { if (b & 1) r ^= a; a = xtime(a); b >>= 1; } return r; }
+function expandKey(key) {
+  const w = []; for (let i = 0; i < 16; i += 4) w.push([key[i], key[i + 1], key[i + 2], key[i + 3]]);
+  let rcon = 1;
+  for (let i = 4; i < 44; i++) {
+    let t = w[i - 1].slice();
+    if (i % 4 === 0) { t = [t[1], t[2], t[3], t[0]].map((v) => SBOX[v]); t[0] ^= rcon; rcon = xtime(rcon); }
+    w.push(w[i - 4].map((v, j) => v ^ t[j]));
+  }
+  return Array.from({ length: 11 }, (_, r) => [].concat(...w.slice(r * 4, r * 4 + 4)));
+}
+function aesDecryptBlock(key, block) {
+  const rks = expandKey(key); let s = Array.from(block, (v, i) => v ^ rks[10][i]);
+  for (let rnd = 9; rnd >= 0; rnd--) {
+    const t = s.slice();
+    for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) s[((c + r) % 4) * 4 + r] = t[c * 4 + r];
+    s = s.map((v) => INV_SBOX[v]).map((v, i) => v ^ rks[rnd][i]);
+    if (rnd) {
+      const u = s.slice();
+      for (let c = 0; c < 4; c++) {
+        const [a0, a1, a2, a3] = u.slice(c * 4, c * 4 + 4);
+        s[c * 4] = gmul(a0, 14) ^ gmul(a1, 11) ^ gmul(a2, 13) ^ gmul(a3, 9);
+        s[c * 4 + 1] = gmul(a0, 9) ^ gmul(a1, 14) ^ gmul(a2, 11) ^ gmul(a3, 13);
+        s[c * 4 + 2] = gmul(a0, 13) ^ gmul(a1, 9) ^ gmul(a2, 14) ^ gmul(a3, 11);
+        s[c * 4 + 3] = gmul(a0, 11) ^ gmul(a1, 13) ^ gmul(a2, 9) ^ gmul(a3, 14);
+      }
+    }
+  }
+  return Uint8Array.from(s);
+}
+const SHA1_CONST = Uint8Array.of(0xAF, 0x62, 0xD2, 0xEC, 0x04, 0x91, 0x96, 0x8C, 0xC5, 0x2A, 0x1A, 0x71, 0x65, 0xF8, 0x65, 0xFE, 0x28, 0x63, 0x29, 0x20, 0x44, 0x69, 0x73, 0x6E, 0x65, 0x79, 0x20, 0x32, 0x30, 0x31, 0x33);
+function deriveKey(uid7) {
+  const m = new Uint8Array(SHA1_CONST.length + 7); m.set(SHA1_CONST); m.set(uid7, SHA1_CONST.length);
+  const d = sha1(m), key = new Uint8Array(16);
+  for (let i = 0; i < 4; i++) for (let x = 0; x < 4; x++) key[x + i * 4] = d[(3 - x) + i * 4];
+  return key;
+}
+function decodeNumber(data) { const p = aesDecryptBlock(deriveKey(data.slice(0, 7)), data.slice(16, 32)); return (p[1] << 16) | (p[2] << 8) | p[3]; }
+
+/* ---- figures & layout ---- */
+const FIGURES = {1000001:[1,"Mr. Incredible"],1000002:[1,"Sulley"],1000003:[1,"Jack Sparrow"],1000004:[1,"Lone Ranger"],1000005:[1,"Tonto"],1000006:[1,"Lightning McQueen"],1000007:[1,"Holley Shiftwell"],1000008:[1,"Buzz Lightyear"],1000009:[1,"Jessie"],1000010:[1,"Mike"],1000011:[1,"Mrs. Incredible"],1000012:[1,"Hector Barbossa"],1000013:[1,"Davy Jones"],1000014:[1,"Randy"],1000015:[1,"Syndrome"],1000016:[1,"Woody"],1000017:[1,"Mater"],1000018:[1,"Dash"],1000019:[1,"Violet"],1000020:[1,"Francesco Bernoulli"],1000021:[1,"Sorcerer's Apprentice Mickey"],1000022:[1,"Jack Skellington"],1000023:[1,"Rapunzel"],1000024:[1,"Anna"],1000025:[1,"Elsa"],1000026:[1,"Phineas"],1000027:[1,"Agent P"],1000028:[1,"Wreck-It Ralph"],1000029:[1,"Vanellope"],1000030:[1,"Mr. Incredible (Crystal)"],1000031:[1,"Jack Sparrow (Crystal)"],1000032:[1,"Sulley (Crystal)"],1000033:[1,"Lightning McQueen (Crystal)"],1000034:[1,"Lone Ranger (Crystal)"],1000035:[1,"Buzz Lightyear (Crystal)"],1000036:[1,"Agent P (Crystal)"],1000037:[1,"Sorcerer's Apprentice Mickey (Crystal)"],1000038:[1,"Buzz Lightyear (Glowing)"],1000100:[2,"Captain America"],1000101:[2,"Hulk"],1000102:[2,"Iron Man"],1000103:[2,"Thor"],1000104:[2,"Groot"],1000105:[2,"Rocket Raccoon"],1000106:[2,"Star-Lord"],1000107:[2,"Spider-Man"],1000108:[2,"Nick Fury"],1000109:[2,"Black Widow"],1000110:[2,"Hawkeye"],1000111:[2,"Drax"],1000112:[2,"Gamora"],1000113:[2,"Iron Fist"],1000114:[2,"Nova"],1000115:[2,"Venom"],1000116:[2,"Donald Duck"],1000117:[2,"Aladdin"],1000118:[2,"Stitch"],1000119:[2,"Merida"],1000120:[2,"Tinker Bell"],1000121:[2,"Maleficent"],1000122:[2,"Hiro"],1000123:[2,"Baymax"],1000124:[2,"Loki"],1000125:[2,"Ronan"],1000126:[2,"Green Goblin"],1000127:[2,"Falcon"],1000128:[2,"Yondu"],1000129:[2,"Jasmine"],1000134:[2,"Black Suit Spider-Man"],1000150:[3,"Sam Flynn"],1000151:[3,"Quorra"],1000200:[3,"Anakin Skywalker"],1000201:[3,"Obi-Wan Kenobi"],1000202:[3,"Yoda"],1000203:[3,"Ahsoka Tano"],1000204:[3,"Darth Maul"],1000206:[3,"Luke Skywalker"],1000207:[3,"Han Solo"],1000208:[3,"Princess Leia"],1000209:[3,"Chewbacca"],1000210:[3,"Darth Vader"],1000211:[3,"Boba Fett"],1000212:[3,"Ezra Bridger"],1000213:[3,"Kanan Jarrus"],1000214:[3,"Sabine Wren"],1000215:[3,"Zeb Orrelios"],1000216:[3,"Joy"],1000217:[3,"Anger"],1000218:[3,"Fear"],1000219:[3,"Sadness"],1000220:[3,"Disgust"],1000221:[3,"Mickey Mouse"],1000222:[3,"Minnie Mouse"],1000223:[3,"Mulan"],1000224:[3,"Olaf"],1000225:[3,"Vision"],1000226:[3,"Ultron"],1000227:[3,"Ant-Man"],1000229:[3,"Captain America - The First Avenger"],1000230:[3,"Finn"],1000231:[3,"Kylo Ren"],1000232:[3,"Poe Dameron"],1000233:[3,"Rey"],1000235:[3,"Spot"],1000236:[3,"Nick Wilde"],1000237:[3,"Judy Hopps"],1000238:[3,"Hulkbuster"],1000239:[3,"Anakin Skywalker (Light FX)"],1000240:[3,"Obi-Wan Kenobi (Light FX)"],1000241:[3,"Yoda (Light FX)"],1000242:[3,"Luke Skywalker (Light FX)"],1000243:[3,"Darth Vader (Light FX)"],1000244:[3,"Kanan Jarrus (Light FX)"],1000245:[3,"Kylo Ren (Light FX)"],1000246:[3,"Black Panther"],1000300:[3,"Nemo"],1000301:[3,"Dory"],1000302:[3,"Baloo"],1000303:[3,"Alice"],1000304:[3,"Mad Hatter"],1000305:[3,"Time"],1000306:[3,"Peter Pan"],2000001:[1,"Starter Play Set"],2000002:[1,"Lone Ranger Play Set"],2000003:[1,"Cars Play Set"],2000004:[1,"Toy Story in Space Play Set"],2000100:[2,"Marvel's The Avengers Play Set"],2000101:[2,"Marvel's Spider-Man Play Set"],2000102:[2,"Marvel's Guardians of the Galaxy Play Set"],2000103:[2,"Assault on Asgard"],2000104:[2,"Escape from the Kyln"],2000105:[2,"Stitch's Tropical Rescue"],2000106:[2,"Brave Forest Siege"],2000200:[3,"Inside Out Play Set"],2000201:[3,"Star Wars: Twilight of the Republic Play Set"],2000202:[3,"Star Wars: Rise Against the Empire Play Set"],2000203:[3,"Star Wars: The Force Awakens Play Set"],2000204:[3,"Marvel Battlegrounds Play Set"],2000205:[3,"Toy Box Speedway"],2000206:[3,"Toy Box Takeover"],2000300:[3,"Finding Dory Play Set"],3000003:[1,"Bolt's Super Strength"],3000004:[1,"Ralph's Power of Destruction"],3000005:[1,"Chernabog's Power"],3000006:[1,"C.H.R.O.M.E. Damage Increaser"],3000007:[1,"Dr. Doofenshmirtz's Damage-Inator!"],3000008:[1,"Electro-Charge"],3000009:[1,"Fix-It Felix's Repair Power"],3000010:[1,"Rapunzel's Healing"],3000011:[1,"C.H.R.O.M.E. Armor Shield"],3000012:[1,"Star Command Shield"],3000013:[1,"Violet's Force Field"],3000014:[1,"Pieces of Eight"],3000015:[1,"Scrooge McDuck's Lucky Dime"],3000016:[1,"User Control"],3000017:[1,"Sorcerer Mickey's Hat"],3000062:[1,"Emperor Zurg's Wrath"],3000063:[1,"Merlin's Summon"],3000165:[2,"Enchanted Rose"],3000166:[2,"Mulan's Training Uniform"],3000167:[2,"Flubber"],3000168:[2,"S.H.I.E.L.D. Helicarrier Strike"],3000169:[2,"Zeus' Thunderbolts"],3000170:[2,"King Louie's Monkeys"],3000171:[2,"Infinity Gauntlet"],3000173:[2,"Sorcerer Supreme"],3000174:[2,"Maleficent's Spell Cast"],3000175:[2,"Chernabog's Spirit Cyclone"],3000176:[2,"Marvel Team-Up: Capt. Marvel"],3000177:[2,"Marvel Team-Up: Iron Patriot"],3000178:[2,"Marvel Team-Up: Ant-Man"],3000179:[2,"Marvel Team-Up: White Tiger"],3000180:[2,"Marvel Team-Up: Yondu"],3000181:[2,"Marvel Team-Up: Winter Soldier"],3000182:[2,"Stark Arc Reactor"],3000183:[2,"Gamma Rays"],3000184:[2,"Alien Symbiote"],3000185:[2,"All for One"],3000186:[2,"Sandy Claws Surprise"],3000187:[2,"Glory Days"],3000188:[2,"Cursed Pirate Gold"],3000189:[2,"Sentinel of Liberty"],3000190:[2,"The Immortal Iron Fist"],3000191:[2,"Space Armor"],3000192:[2,"Rags to Riches"],3000193:[2,"Ultimate Falcon"],3000200:[3,"Tomorrowland Time Bomb"],3000206:[3,"Galactic Team-Up: Mace Windu"],3000209:[3,"Luke's Rebel Alliance Flight Suit Costume"],3000216:[3,"Finn's Stormtrooper Costume"],3000217:[3,"Poe's Resistance Jacket"],3000218:[3,"Resistance Tactical Strike"],3000222:[3,"Officer Nick Wilde"],3000223:[3,"Meter Maid Judy"],3000226:[3,"Darkhawk's Blast"],3000227:[3,"Cosmic Cube Blast"],3000228:[3,"Princess Leia's Boushh Disguise"],3000230:[3,"Nova Corps Strike"],3000231:[3,"King Mickey"],4000018:[1,"Mickey's Car"],4000019:[1,"Cinderella's Coach"],4000020:[1,"Electric Mayhem Bus"],4000021:[1,"Cruella De Vil's Car"],4000022:[1,"Pizza Planet Delivery Truck"],4000023:[1,"Mike's New Car"],4000025:[1,"Parking Lot Tram"],4000026:[1,"Captain Hook's Ship"],4000027:[1,"Dumbo"],4000028:[1,"Calico Helicopter"],4000029:[1,"Maximus"],4000030:[1,"Angus"],4000031:[1,"Abu the Elephant"],4000032:[1,"Headless Horseman's Horse"],4000033:[1,"Phillipe"],4000034:[1,"Khan"],4000035:[1,"Tantor"],4000036:[1,"Dragon Firework Cannon"],4000037:[1,"Stitch's Blaster"],4000038:[1,"Toy Story Mania Blaster"],4000039:[1,"Flamingo Croquet Mallet"],4000040:[1,"Carl Fredricksen's Cane"],4000041:[1,"Hangin' Ten Stitch With Surfboard"],4000042:[1,"Condorman Glider"],4000043:[1,"WALL-E's Fire Extinguisher"],4000044:[1,"On the Grid"],4000045:[1,"WALL-E's Collection"],4000046:[1,"King Candy's Dessert Toppings"],4000048:[1,"Victor's Experiments"],4000049:[1,"Jack's Scary Decorations"],4000051:[1,"Frozen Flourish"],4000052:[1,"Rapunzel's Kingdom"],4000053:[1,"TRON Interface"],4000054:[1,"Buy N Large Atmosphere"],4000055:[1,"Sugar Rush Sky"],4000057:[1,"New Holland Skyline"],4000058:[1,"Halloween Town Sky"],4000060:[1,"Chill in the Air"],4000061:[1,"Rapunzel's Birthday Sky"],4000064:[1,"Astro Blasters Space Cruiser"],4000065:[1,"Marlin's Reef"],4000066:[1,"Nemo's Seascape"],4000067:[1,"Alice's Wonderland"],4000068:[1,"Tulgey Wood"],4000069:[1,"Tri-State Area Terrain"],4000070:[1,"Danville Sky"],4000101:[2,"Stark Tech"],4000102:[2,"Spider-Streets"],4000103:[2,"World War Hulk"],4000104:[2,"Gravity Falls Forest"],4000105:[2,"Neverland"],4000106:[2,"Simba's Pridelands"],4000108:[2,"Calhoun's Command"],4000109:[2,"Star-Lord's Galaxy"],4000110:[2,"Dinosaur World"],4000111:[2,"Groot's Roots"],4000112:[2,"Mulan's Countryside"],4000113:[2,"The Sands of Agrabah"],4000116:[2,"A Small World"],4000117:[2,"View from the Suit"],4000118:[2,"Spider-Sky"],4000119:[2,"World War Hulk Sky"],4000120:[2,"Gravity Falls Sky"],4000121:[2,"Second Star to the Right"],4000122:[2,"The King's Domain"],4000124:[2,"CyBug Swarm"],4000125:[2,"The Rip"],4000126:[2,"Forgotten Skies"],4000127:[2,"Groot's View"],4000128:[2,"The Middle Kingdom"],4000132:[2,"Skies of the World"],4000133:[2,"S.H.I.E.L.D. Containment Truck"],4000134:[2,"Main Street Electrical Parade Float"],4000135:[2,"Mr. Toad's Motorcar"],4000136:[2,"Le Maximum"],4000137:[2,"Alice in Wonderland's Caterpillar"],4000138:[2,"Eglantine's Motorcycle"],4000139:[2,"Medusa's Swamp Mobile"],4000140:[2,"Hydra Motorcycle"],4000141:[2,"Darkwing Duck's Ratcatcher"],4000143:[2,"The USS Swinetrek"],4000145:[2,"Spider-Copter"],4000146:[2,"Aerial Area Rug"],4000147:[2,"Jack-O-Lantern's Glider"],4000148:[2,"Spider-Buggy"],4000149:[2,"Jack Skellington's Reindeer"],4000150:[2,"Fantasyland Carousel Horse"],4000151:[2,"Odin's Horse"],4000152:[2,"Gus the Mule"],4000154:[2,"Darkwing Duck's Grappling Gun"],4000156:[2,"Ghost Rider's Chain Whip"],4000157:[2,"Lew Zealand's Boomerang Fish"],4000158:[2,"Sergeant Calhoun's Blaster"],4000160:[2,"Falcon's Wings"],4000161:[2,"Mabel's Kittens for Fists"],4000162:[2,"Jim Hawkins' Solar Board"],4000163:[2,"Black Panther's Vibranium Knives"],4000164:[2,"Cloak of Levitation"],4000165:[2,"Aladdin's Magic Carpet"],4000166:[2,"Honey Lemon's Ice Capsules"],4000167:[2,"Jasmine's Palace View"],4000193:[2,"Lola"],4000194:[2,"Spider-Cycle"],4000195:[2,"The Avenjet"],4000196:[2,"Spider-Glider"],4000197:[2,"Light Cycle"],4000198:[2,"Light Jet"],4000201:[3,"Retro Ray Gun"],4000202:[3,"Tomorrowland Futurescape"],4000203:[3,"Tomorrowland Stratosphere"],4000204:[3,"Skies Over Felucia"],4000205:[3,"Forests of Felucia"],4000207:[3,"General Grievous' Wheel Bike"],4000210:[3,"Slave I Flyer"],4000211:[3,"Y-Wing Fighter"],4000212:[3,"Arlo"],4000213:[3,"Nash"],4000214:[3,"Butch"],4000215:[3,"Ramsey"],4000220:[3,"Stars Over Sahara Square"],4000221:[3,"Sahara Square Sands"],4000224:[3,"Ghost Rider's Motorcycle"],4000229:[3,"Quad Jumper"]};
+
+const CHARACTER = "character", PLAYSET = "playset", DISC = "disc", OTHER = "other";
+function categoryOf(n) { const m = Math.floor(n / 1000000); return m === 1 ? CHARACTER : m === 2 ? PLAYSET : (m === 3 || m === 4) ? DISC : OTHER; }
+const isToyboxDisc = (n) => Math.floor(n / 1000000) === 4;
+const SLOT_NAMES = ["Play set", "Disc 2", "Disc 3", "Player 1", "P1 disc 1", "P1 disc 2", "Player 2", "P2 disc 1", "P2 disc 2"];
+const SLOT_KIND = [PLAYSET, DISC, DISC, CHARACTER, DISC, DISC, CHARACTER, DISC, DISC];
+const accepts = (slot, cat) => SLOT_KIND[slot] === cat;
+function autoSlot(cat, toybox, occ) {
+  const order = cat === CHARACTER ? [3, 6] : cat === PLAYSET ? [0] : cat === DISC ? (toybox ? [1, 2, 4, 5, 7, 8] : [4, 5, 7, 8, 1, 2]) : [];
+  for (const s of order) if (!occ.has(s)) return s;
+  return null;
+}
+const nameOverrides = {};
+const norm = (t) => t.toLowerCase().replace(/[^a-z0-9]/g, "");
+const stem = (f) => f.replace(/\.[^.]*$/, "");
+const IMAGE_RE = /\.(png|gif|jpe?g|bmp|webp)$/i, BIN_RE = /\.bin$/i;
+function loadNamesCsv(text) {
+  let n = 0;
+  for (const line of text.split(/\r?\n/)) {
+    const i = line.indexOf(","); if (i < 0) continue;
+    const id = Number(line.slice(0, i).trim().replace(/^﻿/, "")), name = line.slice(i + 1).trim().replace(/^"|"$/g, "");
+    if (!Number.isInteger(id) || !name) continue; nameOverrides[id] = name; n++;
+  }
+  return n;
+}
+function makeFigure(file, data) {
+  if (data.length !== FIGURE_SIZE) throw new Error(`${file}: expected ${FIGURE_SIZE} bytes, got ${data.length}`);
+  const number = decodeNumber(data), t = FIGURES[number];
+  return { file, data, number, series: t ? t[0] : 0, known: !!t, name: nameOverrides[number] || (t ? t[1] : stem(file)), category: categoryOf(number) };
+}
+const figLabel = (f) => nameOverrides[f.number] || (f.known ? FIGURES[f.number][1] : stem(f.file));
+
+/* ---- session ---- */
+const LOCAL = "local", SENDING = "sending", CONFIRMED = "confirmed", ERROR = "error";
+class Session {
+  constructor(transport, onLog = () => {}, onSave = () => {}) {
+    this.transport = transport; this.onLog = onLog; this.onSave = onSave;
+    this.placed = new Map(); this.state = new Map();
+    this.link = "disconnected"; this.linkDetail = ""; this.usb = null;
+    this.saves = 0; this.writeBack = true; this.parser = new Parser();
+    this.bind(transport);
+  }
+  bind(t) {
+    t.onLink = (s, d) => this.onLinkEvent(s, d);
+    t.onData = (b) => { for (const f of this.parser.feed(b)) this.onFrame(f); this.changed(); };
+    t.onLog = (m) => this.onLog(m);
+  }
+  changed() { if (this.onChange) this.onChange(); }
+  get connected() { return this.link === "connected"; }
+  consoleText() {
+    if (!this.connected) return "console: unknown";
+    if (this.usb === null) return "console: waiting for Flipper status...";
+    return USB_TEXT[this.usb] || `console state ${this.usb}`;
+  }
+  send(frame) { this.transport.send(frame); }
+  slotOf(fig) { for (const [s, f] of this.placed) if (f === fig) return s; return null; }
+  place(fig, slot = null) {
+    const name = figLabel(fig);
+    if (slot === null) {
+      const occ = new Set([...this.placed.keys()].filter((s) => this.placed.get(s) !== fig));
+      slot = autoSlot(fig.category, isToyboxDisc(fig.number), occ);
+      if (slot === null) return [false, fig.category === OTHER ? `${name}: not a character, play set or disc` : `No free slot for ${name}`];
+    } else if (!(slot >= 0 && slot < SLOT_COUNT)) return [false, "No such slot"];
+    else if (!accepts(slot, fig.category)) return [false, `${name} is a ${fig.category}; ${SLOT_NAMES[slot]} takes a ${SLOT_KIND[slot]}`];
+    for (const [old, f] of [...this.placed]) if (f === fig && old !== slot) this.drop(old);
+    this.placed.set(slot, fig);
+    if (this.connected) { this.state.set(slot, SENDING); this.send(P.load(slot, fig.data)); } else this.state.set(slot, LOCAL);
+    this.onLog(`${name} -> ${SLOT_NAMES[slot]}`); this.changed();
+    return [true, `${name} placed on ${SLOT_NAMES[slot]}`];
+  }
+  remove(slot) {
+    if (!this.placed.has(slot)) return false;
+    const n = figLabel(this.placed.get(slot)); this.drop(slot); this.onLog(`${n} removed from ${SLOT_NAMES[slot]}`); this.changed(); return true;
+  }
+  drop(slot) { this.placed.delete(slot); this.state.delete(slot); if (this.connected) this.send(P.remove(slot)); }
+  clear() { this.placed.clear(); this.state.clear(); if (this.connected) this.send(P.clear()); this.onLog("Base cleared"); this.changed(); }
+  setTransport(t) {
+    try { this.transport.disconnect(); } catch (e) {}
+    this.transport = t; this.bind(t); this.link = "disconnected"; this.linkDetail = ""; this.usb = null; this.parser = new Parser();
+    for (const s of this.placed.keys()) this.state.set(s, LOCAL); this.changed();
+  }
+  connect() { return this.transport.connect(); }
+  disconnect() { return this.transport.disconnect(); }
+  pollStatus() { if (this.connected) this.send(P.statusReq()); }
+  onLinkEvent(state, detail) {
+    this.link = state; this.linkDetail = detail || "";
+    if (state === "connected") {
+      this.onLog(`Connected: ${detail}`); this.parser = new Parser(); this.usb = null;
+      this.send(P.hello()); this.send(P.clear());
+      for (const [slot, fig] of [...this.placed].sort((a, b) => a[0] - b[0])) { this.state.set(slot, SENDING); this.send(P.load(slot, fig.data)); }
+    } else if (state === "disconnected") {
+      this.onLog(detail || "Disconnected"); this.usb = null; for (const s of this.placed.keys()) this.state.set(s, LOCAL);
+    } else this.onLog(`Connecting to ${detail}...`);
+    this.changed();
+  }
+  onFrame(f) {
+    try {
+      if (f.type === MSG.STATUS) {
+        const st = P.parseStatus(f.payload); this.usb = st.usb;
+        for (const slot of [...this.placed.keys()]) {
+          if (this.state.get(slot) === CONFIRMED && !st.present.has(slot)) {
+            this.onLog(`${figLabel(this.placed.get(slot))} was removed on the Flipper`); this.placed.delete(slot); this.state.delete(slot);
+          } else if (this.state.get(slot) === SENDING && st.present.has(slot)) this.state.set(slot, CONFIRMED);
+        }
+      } else if (f.type === MSG.RESULT) {
+        const r = P.parseResult(f.payload);
+        if (r.request === MSG.LOAD && this.placed.has(r.slot)) {
+          if (r.code === 0) this.state.set(r.slot, CONFIRMED);
+          else { this.state.set(r.slot, ERROR); this.onLog(`Flipper refused ${SLOT_NAMES[r.slot] ?? r.slot}: ${RESULT_TEXT[r.code] ?? r.code}`); }
+        }
+      } else if (f.type === MSG.SAVE) { const [slot, data] = P.parseSave(f.payload); this.onSaveFrame(slot, data); }
+    } catch (e) { this.onLog(`Bad message from Flipper: ${e.message}`); }
+  }
+  onSaveFrame(slot, data) {
+    const fig = this.placed.get(slot);
+    if (!fig) return this.onLog(`Game progress for empty slot ${slot} ignored`);
+    if (!this.writeBack) return this.onLog(`${figLabel(fig)}: game progress received (write-back is off)`);
+    if (decodeNumber(data) !== fig.number) return this.onLog(`Could not save ${figLabel(fig)}: data is for a different figure; not overwriting`);
+    if (!fig.backup) fig.backup = fig.data;
+    fig.data = Uint8Array.from(data); this.saves++;
+    this.onLog(`Saved game progress to ${fig.file}`); this.onSave(fig);
+  }
+}
+
+/* ---- transports ---- */
+class FakeFlipper {
+  constructor() { this.usb = 2; this.present = new Map(); this.on = false; this.parser = new Parser(); this.chunk = 20; }
+  async connect() { this.on = true; this.parser = new Parser(); this.onLink("connecting", "demo"); setTimeout(() => this.onLink("connected", "simulated Flipper"), 50); }
+  disconnect() { if (this.on) { this.on = false; this.onLink("disconnected", "Disconnected"); } }
+  send(data) { if (!this.on) return; for (const f of this.parser.feed(data)) this.handle(f); }
+  simulateSave(slot, data) { this.present.set(slot, data); const p = new Uint8Array(1 + data.length); p[0] = slot; p.set(data, 1); this.reply(MSG.SAVE, p); }
+  status() { let m = 0; for (const s of this.present.keys()) m |= 1 << s; this.reply(MSG.STATUS, Uint8Array.of(VERSION, this.usb, m & 0xFF, m >> 8)); }
+  result(req, slot, code) { this.reply(MSG.RESULT, Uint8Array.of(req, slot, code)); }
+  reply(type, payload) { const raw = encode(type, payload); setTimeout(() => { for (let i = 0; i < raw.length; i += this.chunk) this.onData(raw.slice(i, i + this.chunk)); }, 20); }
+  handle(f) {
+    const slot = f.payload.length ? f.payload[0] : 0;
+    if (f.type === MSG.HELLO || f.type === MSG.STATUS_REQ) this.status();
+    else if (f.type === MSG.LOAD) {
+      if (f.payload.length !== 1 + FIGURE_SIZE) this.result(f.type, slot, 2);
+      else if (slot >= 9) this.result(f.type, slot, 1);
+      else { this.present.set(slot, f.payload.slice(1)); this.result(f.type, slot, 0); this.status(); }
+    } else if (f.type === MSG.REMOVE) {
+      if (slot >= 9) this.result(f.type, slot, 1);
+      else if (!this.present.has(slot)) this.result(f.type, slot, 3);
+      else { this.present.delete(slot); this.result(f.type, slot, 0); this.status(); }
+    } else if (f.type === MSG.CLEAR) { this.present.clear(); this.result(f.type, 0, 0); this.status(); }
+    else this.result(f.type, 0, 4);
+  }
+}
+class WebBleTransport {
+  constructor() { this.device = null; this.writeCh = null; this.withResponse = false; this.q = []; this.busy = false; this.chunk = 20; this.alive = false; }
+  static supported() { return typeof navigator !== "undefined" && !!navigator.bluetooth; }
+  async connect() {
+    if (!WebBleTransport.supported()) { this.onLink("disconnected", "This browser has no Web Bluetooth. Use Chrome on Android (iPhone: the free Bluefy browser)."); return; }
+    let stage = "choosing a device";
+    try {
+      this.device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: SERIAL_PROFILES.map((p) => p.service) });
+      this.onLink("connecting", this.device.name || "device");
+      this.device.addEventListener("gattserverdisconnected", () => {
+        const was = this.alive; this.alive = false; this.q = [];
+        this.onLink("disconnected", was ? "Bluetooth connection lost" : "Disconnected");
+      });
+      stage = "opening the Bluetooth connection";
+      const server = await this.device.gatt.connect();
+      stage = "looking for the Flipper serial service";
+      let chars = null;
+      for (const p of SERIAL_PROFILES) {
+        try { const svc = await server.getPrimaryService(p.service); chars = [await svc.getCharacteristic(p.a), await svc.getCharacteristic(p.b)]; break; } catch (e) {}
+      }
+      if (!chars) {
+        this.device.gatt.disconnect();
+        this.onLink("disconnected", "Connected, but this device has no Flipper serial service. On the Flipper open Toy Pad Emulator > Skylanders > your game, then hold Left to turn on the BLE link.");
+        return;
+      }
+      const canNotify = (c) => c.properties.notify || c.properties.indicate;
+      const canWrite = (c) => c.properties.write || c.properties.writeWithoutResponse;
+      const writeCh = chars.find((c) => canWrite(c) && !canNotify(c)) || chars.find(canWrite);
+      const notifyCh = chars.find((c) => c !== writeCh && canNotify(c));
+      if (!writeCh || !notifyCh) throw new Error("serial characteristics do not look right");
+      this.writeCh = writeCh; this.withResponse = !!writeCh.properties.write;
+      stage = "subscribing to Flipper replies (accept the pairing request; the PIN is on the Flipper screen)";
+      notifyCh.addEventListener("characteristicvaluechanged", (e) => { const v = e.target.value; this.onData(new Uint8Array(v.buffer, v.byteOffset, v.byteLength).slice()); });
+      await notifyCh.startNotifications();
+      this.alive = true;
+      this.onLink("connected", `${this.device.name || "Flipper"} (chunk ${this.chunk} bytes)`);
+    } catch (e) {
+      if (e && e.name === "NotFoundError") { this.onLink("disconnected", "No device chosen"); return; }
+      try { this.device && this.device.gatt.connected && this.device.gatt.disconnect(); } catch (x) {}
+      this.onLink("disconnected", `Could not connect while ${stage}: ${e.name}: ${e.message}`);
+    }
+  }
+  disconnect() { this.q = []; if (this.device && this.device.gatt && this.device.gatt.connected) this.device.gatt.disconnect(); }
+  send(data) { this.q.push(data); this.drain(); }
+  async drain() {
+    if (this.busy) return; this.busy = true;
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    try {
+      while (this.q.length && this.alive) {
+        const data = this.q.shift();
+        try {
+          for (let i = 0; i < data.length; i += this.chunk) {
+            const piece = data.slice(i, i + this.chunk);
+            if (this.withResponse) await this.writeCh.writeValueWithResponse(piece);
+            else { await this.writeCh.writeValueWithoutResponse(piece); await sleep(20); }
+          }
+          await sleep(150);
+        } catch (e) { this.onLog(`BLE write failed: ${e.message}`); this.q = []; }
+      }
+    } finally { this.busy = false; }
+  }
+}
+
+if (typeof module !== "undefined") module.exports = { crc8, encode, Parser, P, MSG, Session, FakeFlipper, makeFigure, figLabel, sha1, decodeNumber, SLOT_COUNT, FIGURES, LOCAL, SENDING, CONFIRMED, ERROR, loadNamesCsv };
+/* ===== UI ===== */
+const $ = (id) => document.getElementById(id);
+const figs = [], pics = new Map(), picPick = new Map();
+let selected = new Set(), session, demoFlip = null, lastSig = "";
+const tap = { f: null, t: 0 };
+const SVGNS = "http://www.w3.org/2000/svg";
+const PALETTE = ["#3aa0ff", "#33e0a1", "#f2c14e", "#ff6a4d", "#b07cff", "#ff7ac6", "#4dd0e1", "#9ccc65"];
+const STATE_COLOR = { local: "#6b7385", sending: "#f2c14e", confirmed: "#3be8a0", error: "#ff5a4d" };
+const KIND_LABEL = { character: "Character", playset: "Play set", disc: "Disc", other: "Other" };
+const GLOW = ["#33e0a1", "#f2c14e", "#f2c14e", "#3aa0ff", "#3aa0ff", "#3aa0ff", "#ff6a4d", "#ff6a4d", "#ff6a4d"];
+
+let db = null;
+const idb = {
+  open() { return new Promise((res) => { try { const r = indexedDB.open("infportal", 1); r.onupgradeneeded = () => { r.result.createObjectStore("figs", { keyPath: "file" }); r.result.createObjectStore("pics", { keyPath: "name" }); }; r.onsuccess = () => { db = r.result; res(); }; r.onerror = () => res(); } catch (e) { res(); } }); },
+  put(store, val) { if (!db) return; try { db.transaction(store, "readwrite").objectStore(store).put(val); } catch (e) {} },
+  del(store, key) { if (!db) return; try { db.transaction(store, "readwrite").objectStore(store).delete(key); } catch (e) {} },
+  all(store) { return new Promise((res) => { if (!db) return res([]); try { const r = db.transaction(store).objectStore(store).getAll(); r.onsuccess = () => res(r.result); r.onerror = () => res([]); } catch (e) { res([]); } }); },
+};
+const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+
+function setMsg(text, bad = false) { const m = $("msg"); m.textContent = text; m.className = bad ? "r" : ""; }
+function log(t) { const l = $("log"); l.textContent += (l.textContent ? "\n" : "") + new Date().toLocaleTimeString() + "  " + t; l.scrollTop = l.scrollHeight; }
+function picFor(f) {
+  if (picPick.has(f.number)) return picPick.get(f.number);
+  for (const k of [norm(stem(f.file)), String(f.number), norm(figLabel(f))]) { const p = pics.get(k); if (k && p) return p.url; }
+  return null;
+}
+const colourFor = (f) => PALETTE[f.number % PALETTE.length];
+const initials = (n) => (n.match(/[A-Za-z0-9]+/g) || []).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
+const sortFigs = () => figs.sort((a, b) => a.number - b.number || figLabel(a).localeCompare(figLabel(b)));
+
+async function ingest(fileList) {
+  let nb = 0, np = 0; const skipped = [];
+  for (const file of fileList) {
+    const name = file.name;
+    if (IMAGE_RE.test(name)) {
+      const k = norm(stem(name));
+      if (k && !pics.has(k)) { pics.set(k, { name, url: URL.createObjectURL(file) }); idb.put("pics", { name, blob: file }); np++; }
+    } else if (BIN_RE.test(name) || file.size === FIGURE_SIZE) {
+      try {
+        const fig = makeFigure(name, new Uint8Array(await file.arrayBuffer()));
+        const old = figs.findIndex((f) => f.file === name); if (old >= 0) figs.splice(old, 1);
+        figs.push(fig); idb.put("figs", { file: name, data: fig.data }); nb++;
+      } catch (e) { skipped.push(e.message); }
+    }
+  }
+  sortFigs();
+  setMsg(`Added ${nb} figure${nb === 1 ? "" : "s"}` + (np ? `, ${np} picture${np === 1 ? "" : "s"}` : "") + (skipped.length ? `; skipped ${skipped.length} (${skipped[0]})` : ""), !nb && !np && skipped.length > 0);
+  skipped.forEach(log); render(true);
+}
+
+/* ---- base drawing: slot 0 hex play set, 1-2 centre discs, 3-5 player 1, 6-8 player 2 ---- */
+function geometry() {
+  const tall = window.innerWidth < window.innerHeight * 0.9;
+  if (!tall) return { w: 1000, h: 600, c: { 0: [500, 215, 118, "hex"], 1: [425, 440, 52], 2: [575, 440, 52], 3: [185, 255, 110], 4: [115, 455, 46], 5: [255, 455, 46], 6: [815, 255, 110], 7: [745, 455, 46], 8: [885, 455, 46] } };
+  return { w: 600, h: 1000, c: { 0: [300, 140, 110, "hex"], 1: [190, 350, 58], 2: [410, 350, 58], 3: [160, 600, 100], 4: [350, 575, 52], 5: [500, 575, 52], 6: [160, 850, 100], 7: [350, 825, 52], 8: [500, 825, 52] } };
+}
+function hexPoints(cx, cy, r) { return [0, 1, 2, 3, 4, 5].map((i) => { const a = (Math.PI / 3) * i - Math.PI / 6; return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`; }).join(" "); }
+function canTarget(slot) { return [...selected].some((f) => accepts(slot, f.category)); }
+function draw() {
+  const g = geometry(), svg = $("svg"), s = session;
+  svg.setAttribute("viewBox", `0 0 ${g.w} ${g.h}`); svg.innerHTML = "";
+  const el = (tag, attrs = {}, parent = svg) => { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; };
+  const defs = el("defs");
+  for (let slot = 0; slot < SLOT_COUNT; slot++) {
+    const [cx, cy, r, shape] = g.c[slot], fig = s.placed.get(slot), glow = GLOW[slot];
+    const grp = el("g", { class: "slot" + (selected.size && !fig && canTarget(slot) ? " target" : "") });
+    grp.addEventListener("click", () => slotTap(slot));
+    const ring = (rr, attrs) => shape === "hex" ? el("polygon", { points: hexPoints(cx, cy, rr), ...attrs }, grp) : el("circle", { cx, cy, r: rr, ...attrs }, grp);
+    ring(r + 10, { fill: "none", stroke: glow, "stroke-opacity": fig ? 0.55 : 0.18, "stroke-width": 8 });
+    ring(r, { class: "ring" });
+    if (fig) {
+      const url = picFor(fig);
+      if (url) {
+        const cp = el("clipPath", { id: "cp" + slot }, defs);
+        if (shape === "hex") el("polygon", { points: hexPoints(cx, cy, r - 4) }, cp); else el("circle", { cx, cy, r: r - 4 }, cp);
+        el("image", { href: url, x: cx - r, y: cy - r, width: r * 2, height: r * 2, preserveAspectRatio: "xMidYMin slice", "clip-path": `url(#cp${slot})` }, grp);
+      } else {
+        ring(r - 4, { fill: colourFor(fig) });
+        const t = el("text", { x: cx, y: cy, class: "ini" }, grp); t.textContent = initials(figLabel(fig));
+      }
+      const n = el("text", { x: cx, y: cy + r - 12, class: "nm" }, grp); n.textContent = figLabel(fig).slice(0, r > 90 ? 16 : 9);
+      el("circle", { cx: cx + r * 0.72, cy: cy - r * 0.72, r: 13, fill: STATE_COLOR[s.state.get(slot)] || "#6b7385", stroke: "#0e1015", "stroke-width": 4 }, grp);
+    }
+    const lb = el("text", { x: cx, y: cy + r + 28, class: "sl" }, grp); lb.textContent = SLOT_NAMES[slot];
+  }
+}
+
+/* ---- list ---- */
+function visibleFigs() {
+  const q = norm($("q").value), f = $("filter").value;
+  const kind = { Characters: "character", "Play sets": "playset", Discs: "disc" }[f];
+  return figs.filter((x) => (!q || norm(figLabel(x) + stem(x.file)).includes(q)) && (!kind || x.category === kind) &&
+    (f !== "On base" || session.slotOf(x) !== null) && (f !== "Not on base" || session.slotOf(x) === null));
+}
+function renderList() {
+  const list = $("list"); list.innerHTML = "";
+  if (!figs.length) { list.innerHTML = '<p class="hint">No figures yet. Tap “Add figures…” and choose your 320-byte .bin files.</p>'; return; }
+  for (const f of visibleFigs()) {
+    const slot = session.slotOf(f), row = document.createElement("div");
+    row.className = "row" + (selected.has(f) ? " sel" : "") + (slot !== null ? " onp" : "");
+    const th = document.createElement("div"); th.className = "thumb"; const url = picFor(f);
+    if (url) th.style.backgroundImage = `url("${url}")`; else { th.style.background = colourFor(f); th.textContent = initials(figLabel(f)); }
+    const t = document.createElement("div"); t.className = "t"; t.innerHTML = "<div></div><small></small>";
+    t.firstChild.textContent = figLabel(f);
+    const tag = f.category === "disc" && isToyboxDisc(f.number) ? "Toy Box disc" : KIND_LABEL[f.category];
+    t.lastChild.textContent = (slot !== null ? "on " + SLOT_NAMES[slot] : tag) + ` · ${f.file}`;
+    const more = document.createElement("button"); more.className = "more"; more.textContent = "⋮";
+    more.onclick = (e) => { e.stopPropagation(); figMenu(f); };
+    row.append(th, t, more);
+    row.onclick = () => {
+      const now = Date.now();
+      if (tap.f === f && now - tap.t < 400) { selected.clear(); tap.f = null; placeFigs([f], null); return; }
+      tap.f = f; tap.t = now;
+      if (selected.has(f)) selected.delete(f); else selected.add(f);
+      render(true);
+    };
+    list.appendChild(row);
+  }
+}
+
+/* ---- actions ---- */
+function placeFigs(list, slot) {
+  if (!list.length) return;
+  let placed = 0; const notes = []; let first = slot;
+  for (const f of list) {
+    const [ok, msg] = session.place(f, first !== null && accepts(first, f.category) ? first : (first !== null && list.length === 1 ? first : null));
+    if (ok) { placed++; if (first !== null && accepts(first, f.category)) first = null; } else notes.push(msg);
+    if (list.length === 1) { setMsg(msg, !ok); selected.clear(); render(true); return; }
+  }
+  setMsg(`${placed} placed` + (notes.length ? "; " + notes.slice(0, 2).join("; ") + (notes.length > 2 ? ` (+${notes.length - 2} more)` : "") : ""), placed === 0);
+  selected.clear(); render(true);
+}
+function slotTap(slot) {
+  const fig = session.placed.get(slot);
+  if (selected.size) { placeFigs([...selected], slot); return; }
+  if (fig) { session.remove(slot); setMsg(`Lifted off ${SLOT_NAMES[slot]}`); render(true); }
+}
+function figMenu(f) {
+  const d = $("dlg"); d.innerHTML = ""; const h = document.createElement("h3"); h.textContent = figLabel(f); d.appendChild(h);
+  const add = (label, fn, cls) => { const b = document.createElement("button"); b.textContent = label; if (cls) b.className = cls; b.onclick = () => { d.close(); fn(); }; d.appendChild(b); };
+  add("Place on next free slot", () => placeFigs([f], null));
+  add("Set picture…", () => { const i = document.createElement("input"); i.type = "file"; i.accept = "image/*"; i.onchange = () => { if (i.files[0]) { picPick.set(f.number, URL.createObjectURL(i.files[0])); render(true); } }; i.click(); });
+  if (picPick.has(f.number)) add("Clear picture I chose", () => { picPick.delete(f.number); render(true); });
+  add("Rename (by figure number)…", () => { const n = prompt(`Name for figure ${f.number}`, figLabel(f)); if (n && n.trim()) { nameOverrides[f.number] = n.trim(); const o = lsGet("inf_names", {}); o[f.number] = n.trim(); lsSet("inf_names", o); render(true); } });
+  add("Download dump" + (f.backup ? " (with game progress)" : ""), () => download(f.file, f.data));
+  if (f.backup) add("Download original backup", () => download(f.file + ".bak", f.backup));
+  add("Remove from library", () => { const s = session.slotOf(f); if (s !== null) session.remove(s); figs.splice(figs.indexOf(f), 1); selected.delete(f); idb.del("figs", f.file); render(true); }, "danger");
+  add("Close", () => {});
+  d.showModal();
+}
+function download(name, data) { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([data], { type: "application/octet-stream" })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
+
+function renderStatus() {
+  const s = session, col = { connected: "g", connecting: "w" }[s.link] || "";
+  $("status").innerHTML = `<div><b>Bluetooth:</b> <span class="${col}"></span></div><div><b>Console:</b> <span class="${(s.usb || 0) === 2 ? "g" : s.connected ? "w" : ""}"></span></div>`;
+  const sp = $("status").querySelectorAll("span");
+  sp[0].textContent = s.link + (s.connected && s.linkDetail ? ` (${s.linkDetail})` : "") + (demoFlip && s.transport === demoFlip ? " · DEMO" : "");
+  sp[1].textContent = s.consoleText();
+  $("bConnect").textContent = s.connected ? "Disconnect" : s.link === "connecting" ? "Connecting…" : "Connect";
+  $("bConnect").className = s.connected ? "" : "primary";
+}
+function render(force) {
+  const s = session;
+  const sig = JSON.stringify([[...s.placed].map(([k, f]) => [k, f.file, s.state.get(k)]), s.connected, [...selected].map((f) => f.file), figs.length, $("q").value, $("filter").value, window.innerWidth < window.innerHeight * 0.9]);
+  if (force || sig !== lastSig) { lastSig = sig; draw(); renderList(); }
+  renderStatus();
+}
+
+function newSession(transport) {
+  const s = new Session(transport, log, (fig) => { idb.put("figs", { file: fig.file, data: fig.data }); setMsg(`Saved game progress for ${figLabel(fig)}`); });
+  s.writeBack = $("wb").checked; s.onChange = () => render(); return s;
+}
+function start() {
+  session = newSession(new WebBleTransport());
+  if (!WebBleTransport.supported()) setMsg("This browser can't do Bluetooth. Use Chrome on Android (iPhone: the Bluefy browser). Demo mode still works.", true);
+  $("bConnect").onclick = () => { if (session.connected || session.link === "connecting") session.disconnect(); else session.connect(); };
+  $("bDemo").onclick = () => {
+    const keep = session.placed, old = session; demoFlip = new FakeFlipper();
+    session = newSession(demoFlip); session.placed = keep; for (const k of keep.keys()) session.state.set(k, LOCAL);
+    try { old.transport.disconnect(); } catch (e) {}
+    session.connect(); setMsg("Demo mode: a simulated Flipper is connected."); render(true);
+  };
+  $("bPlaceSel").onclick = () => { const l = [...selected]; if (!l.length) return setMsg("Select one or more figures first.", true); placeFigs(l, null); };
+  $("bPlaceAll").onclick = () => placeFigs(visibleFigs().filter((f) => session.slotOf(f) === null), null);
+  $("bClear").onclick = () => { session.clear(); setMsg("Base cleared"); render(true); };
+  $("wb").onchange = () => { session.writeBack = $("wb").checked; };
+  $("q").oninput = () => render(true); $("filter").onchange = () => render(true);
+  for (const id of ["fFiles", "fFolder", "fPics"]) $(id).onchange = (e) => { ingest([...e.target.files]); e.target.value = ""; };
+  $("fNames").onchange = async (e) => { const f = e.target.files[0]; if (f) { const n = loadNamesCsv(await f.text()); const o = lsGet("inf_names", {}); Object.assign(o, nameOverrides); lsSet("inf_names", o); setMsg(`${n} names loaded`); render(true); } e.target.value = ""; };
+  window.addEventListener("resize", () => render());
+  setInterval(() => session.pollStatus(), 2000); setInterval(() => render(), 500); render(true);
+}
+(async () => {
+  Object.assign(nameOverrides, lsGet("inf_names", {}));
+  await idb.open();
+  for (const r of await idb.all("figs")) { try { figs.push(makeFigure(r.file, new Uint8Array(r.data))); } catch (e) {} }
+  for (const r of await idb.all("pics")) { const k = norm(stem(r.name)); if (k) pics.set(k, { name: r.name, url: URL.createObjectURL(r.blob) }); }
+  sortFigs(); start();
+})();
+</script></body></html>
